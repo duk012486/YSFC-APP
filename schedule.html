@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>일정 · YSFC</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Apple SD Gothic Neo', '맑은 고딕', sans-serif; background: #f0f4f8; }
+    .header { background: linear-gradient(135deg, #1a7c3e, #25a85a); color: white; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .back-btn { font-size: 22px; text-decoration: none; color: white; }
+    .header h1 { font-size: 18px; font-weight: 700; }
+    .header-btns { display: flex; gap: 8px; }
+    .tour-btn, .admin-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; }
+    .admin-btn.on { background: #fbbf24; color: #333; font-weight: 700; }
+    .grade-bar { background: white; display: flex; gap: 6px; padding: 10px 14px; overflow-x: auto; border-bottom: 1px solid #f0f0f0; }
+    .grade-tab { padding: 6px 14px; font-size: 13px; font-weight: 600; color: #888; background: #f4f4f4; border: none; border-radius: 20px; cursor: pointer; white-space: nowrap; }
+    .grade-tab.active { background: #1a7c3e; color: white; }
+    .month-header { background: #1a7c3e; color: white; padding: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .month-nav { background: rgba(255,255,255,0.2); border: none; color: white; font-size: 20px; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; }
+    .month-info { text-align: center; cursor: pointer; }
+    .month-title { font-size: 18px; font-weight: 700; }
+    .month-sub { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+    .tip-bar { background: #e8f5ee; color: #1a7c3e; font-size: 12px; text-align: center; padding: 8px; font-weight: 600; }
+    .calendar-wrap { background: white; margin: 12px; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+    .day-headers { display: grid; grid-template-columns: repeat(7, 1fr); background: #1a7c3e; }
+    .day-header { text-align: center; padding: 8px 0; font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.9); }
+    .day-header.sun { color: #ffb3b3; }
+    .day-header.sat { color: #b3d4ff; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); border-left: 0.5px solid #eee; border-top: 0.5px solid #eee; }
+    .cal-cell { border-right: 0.5px solid #eee; border-bottom: 0.5px solid #eee; min-height: 64px; padding: 4px 3px; cursor: pointer; }
+    .cal-cell.empty { background: #fafafa; cursor: default; }
+    .cal-cell.today { background: #f0fff4; }
+    .cal-cell.selecting { background: #d3f0dd; outline: 2px solid #1a7c3e; outline-offset: -2px; }
+    .cell-date { font-size: 12px; font-weight: 700; margin-bottom: 3px; color: #333; }
+    .cell-date.sun { color: #ef4444; }
+    .cell-date.sat { color: #3b5bdb; }
+    .cell-date.today-num { background: #1a7c3e; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+    .cell-tag { font-size: 9px; font-weight: 600; padding: 2px 3px; border-radius: 4px; display: block; text-align: center; margin-top: 2px; line-height: 1.25; word-break: keep-all; }
+    .tag-normal { background: #e8f5ee; color: #1a7c3e; }
+    .tag-off { background: #fce4ec; color: #e91e63; }
+    .tag-practice { background: #e0f2fe; color: #0284c7; }
+    .tag-tour { background: #e8f0fb; color: #3b5bdb; }
+    .tag-tour-start { background: #dbeafe; color: #1d4ed8; }
+    .tag-tour-end { background: #dbeafe; color: #1d4ed8; }
+    .legend { display: flex; gap: 8px; padding: 10px 14px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #666; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+    .notice-bar { background: #fff8e1; border-radius: 10px; padding: 10px 14px; margin: 0 12px 12px; font-size: 12px; color: #856404; text-align: center; display: none; }
+    .notice-bar.show { display: block; }
+    .schedule-list { padding: 0 12px 200px; }
+    .list-title { font-size: 14px; font-weight: 700; color: #333; margin-bottom: 10px; padding-left: 4px; }
+    .schedule-item { background: white; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 12px; }
+    .item-date { text-align: center; min-width: 36px; }
+    .item-date .d { font-size: 20px; font-weight: 700; color: #1a7c3e; }
+    .item-date .w { font-size: 10px; color: #aaa; }
+    .item-divider { width: 1px; height: 36px; background: #eee; }
+    .item-info { flex: 1; }
+    .item-name { font-size: 13px; font-weight: 600; color: #333; }
+    .item-detail { font-size: 11px; color: #888; margin-top: 2px; }
+    .item-grade { font-size: 10px; color: #1a7c3e; background: #e8f5ee; padding: 1px 6px; border-radius: 10px; margin-left: 4px; }
+    .item-del { background: #fde8e8; color: #e53e3e; border: none; border-radius: 8px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+    .item-fixed { font-size: 10px; color: #bbb; }
+    .loading { text-align: center; padding: 30px; color: #aaa; font-size: 13px; }
+    .action-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-radius: 20px 20px 0 0; padding: 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.18); transform: translateY(110%); transition: transform 0.3s; z-index: 50; max-height: 80vh; overflow-y: auto; }
+    .action-bar.show { transform: translateY(0); }
+    .action-title { font-size: 14px; font-weight: 700; text-align: center; margin-bottom: 10px; color: #333; }
+    .selected-dates { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; max-height: 70px; overflow-y: auto; }
+    .date-chip { background: #1a7c3e; color: white; font-size: 12px; padding: 4px 10px; border-radius: 20px; }
+    .type-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .type-card { padding: 10px 6px; border-radius: 12px; text-align: center; border: 2px solid #eee; cursor: pointer; font-size: 12px; font-weight: 600; color: #aaa; background: white; }
+    .type-card.selected { border-color: #1a7c3e; color: #1a7c3e; background: #f0fff4; }
+    .type-card .type-icon { font-size: 18px; display: block; margin-bottom: 3px; }
+    .ab-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+    .grade-select { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .grade-option { padding: 6px 12px; border-radius: 20px; border: 2px solid #eee; cursor: pointer; font-size: 12px; font-weight: 600; color: #aaa; background: white; }
+    .grade-option.selected { border-color: #1a7c3e; color: #1a7c3e; background: #f0fff4; }
+    .opp-input { width: 100%; padding: 10px 12px; border: 1px solid #eee; border-radius: 8px; font-size: 14px; font-family: inherit; margin-bottom: 12px; display: none; }
+    .opp-input.show { display: block; }
+    .ab-btns { display: flex; gap: 8px; }
+    .form-btn { flex: 2; padding: 14px; background: #1a7c3e; color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; }
+    .form-btn:disabled { background: #aaa; }
+    .cancel-btn { flex: 1; padding: 14px; background: #f4f4f4; color: #666; border: none; border-radius: 12px; font-size: 14px; cursor: pointer; }
+    .modal-bg { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; }
+    .modal-bg.show { display: flex; align-items: flex-end; }
+    .modal { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; max-height: 88vh; overflow-y: auto; }
+    .modal-center { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 110; align-items: center; justify-content: center; padding: 20px; }
+    .modal-center.show { display: flex; }
+    .modal-center .box { background: white; border-radius: 16px; padding: 24px; width: 100%; max-width: 340px; }
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+    .modal-sub { font-size: 12px; color: #888; text-align: center; margin-bottom: 16px; line-height: 1.5; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 12px; color: #888; margin-bottom: 6px; display: block; }
+    .form-input { width: 100%; padding: 10px 12px; border: 1px solid #eee; border-radius: 8px; font-size: 14px; font-family: inherit; }
+    .date-row { display: flex; gap: 10px; }
+    .date-row .form-input { flex: 1; }
+    .modal .form-btn { width: 100%; margin-top: 8px; }
+    .modal .cancel-btn { width: 100%; margin-top: 8px; }
+    .mc-btn { width: 100%; padding: 14px; background: #1a7c3e; color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    .mc-cancel { width: 100%; padding: 12px; background: #f4f4f4; color: #666; border: none; border-radius: 12px; font-size: 14px; cursor: pointer; margin-top: 8px; }
+    /* 년월 선택 */
+    .ym-wrap { display: flex; gap: 12px; }
+    .ym-col { flex: 1; }
+    .ym-col .lbl { font-size: 12px; color: #888; text-align: center; margin-bottom: 8px; }
+    .ym-scroll { height: 180px; overflow-y: auto; border: 1px solid #eee; border-radius: 10px; }
+    .ym-opt { padding: 12px; text-align: center; font-size: 15px; cursor: pointer; border-bottom: 1px solid #f4f4f4; }
+    .ym-opt.sel { background: #1a7c3e; color: white; font-weight: 700; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; padding: 10px 0 16px; z-index: 10; }
+    .nav-item { text-align: center; text-decoration: none; color: #aaa; font-size: 10px; }
+    .nav-item.active { color: #1a7c3e; }
+    .nav-item .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-left">
+      <a href="index.html" class="back-btn">←</a>
+      <h1>📅 월간 일정표</h1>
+    </div>
+    <div class="header-btns">
+      <button class="admin-btn" id="admin-btn" onclick="toggleAdmin()">🔑</button>
+      <button class="tour-btn" onclick="openTourModal()">🏆 대회</button>
+    </div>
+  </div>
+
+  <div class="grade-bar" id="grade-bar">
+    <button class="grade-tab active" onclick="filterGrade('전체', this)">전체</button>
+    <button class="grade-tab" onclick="filterGrade('2', this)">2학년</button>
+    <button class="grade-tab" onclick="filterGrade('3', this)">3학년</button>
+    <button class="grade-tab" onclick="filterGrade('4', this)">4학년</button>
+    <button class="grade-tab" onclick="filterGrade('5', this)">5학년</button>
+    <button class="grade-tab" onclick="filterGrade('6', this)">6학년</button>
+  </div>
+
+  <div class="month-header">
+    <button class="month-nav" onclick="changeMonth(-1)">‹</button>
+    <div class="month-info" onclick="openYM()">
+      <div class="month-title" id="month-title"></div>
+      <div class="month-sub">탭하면 년·월 선택 ▼</div>
+    </div>
+    <button class="month-nav" onclick="changeMonth(1)">›</button>
+  </div>
+
+  <div class="tip-bar">👆 빈 날짜 탭=등록 / 아래 목록에서 🗑️=삭제</div>
+
+  <div class="calendar-wrap">
+    <div class="day-headers">
+      <div class="day-header sun">SUN</div>
+      <div class="day-header">MON</div>
+      <div class="day-header">TUE</div>
+      <div class="day-header">WED</div>
+      <div class="day-header">THU</div>
+      <div class="day-header">FRI</div>
+      <div class="day-header sat">SAT</div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#e8f5ee; border:1px solid #1a7c3e;"></div>정상수업</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fce4ec; border:1px solid #e91e63;"></div>센터휴무</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e0f2fe; border:1px solid #0284c7;"></div>연습경기</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#e8f0fb; border:1px solid #3b5bdb;"></div>대회</div>
+  </div>
+
+  <div class="notice-bar" id="notice-bar"></div>
+
+  <div class="schedule-list">
+    <div class="list-title" id="list-title">📋 이달 주요 일정</div>
+    <div id="schedule-items"><div class="loading">불러오는 중...</div></div>
+  </div>
+
+  <div class="action-bar" id="action-bar">
+    <div class="action-title">선택한 날짜에 등록할 일정</div>
+    <div class="selected-dates" id="selected-dates"></div>
+    <div class="ab-label">일정 종류</div>
+    <div class="type-grid">
+      <div class="type-card selected" id="type-normal" onclick="selectType('normal')"><span class="type-icon">✅</span>정상수업</div>
+      <div class="type-card" id="type-off" onclick="selectType('off')"><span class="type-icon">🔴</span>센터휴무</div>
+      <div class="type-card" id="type-practice" onclick="selectType('practice')"><span class="type-icon">⚽</span>연습경기</div>
+    </div>
+    <input class="opp-input" id="opp-input" placeholder="상대팀 (예: 수원FC)" />
+    <div class="ab-label">대상 학년 (여러 개 선택)</div>
+    <div class="grade-select" id="grade-select">
+      <div class="grade-option" data-grade="전체" onclick="toggleGrade(this)">전체</div>
+      <div class="grade-option" data-grade="2" onclick="toggleGrade(this)">2학년</div>
+      <div class="grade-option" data-grade="3" onclick="toggleGrade(this)">3학년</div>
+      <div class="grade-option" data-grade="4" onclick="toggleGrade(this)">4학년</div>
+      <div class="grade-option" data-grade="5" onclick="toggleGrade(this)">5학년</div>
+      <div class="grade-option" data-grade="6" onclick="toggleGrade(this)">6학년</div>
+    </div>
+    <div class="ab-btns">
+      <button class="cancel-btn" onclick="clearSelection()">취소</button>
+      <button class="form-btn" id="submit-btn" onclick="submitNormal()">📅 일정 등록</button>
+    </div>
+  </div>
+
+  <div class="modal-bg" id="tour-modal">
+    <div class="modal">
+      <div class="modal-title">🏆 대회 추가</div>
+      <div class="form-group">
+        <label class="form-label">대회명</label>
+        <input class="form-input" id="form-tour-name" placeholder="예: KY서천대회 U-11" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">대회 기간 (시작일 ~ 종료일)</label>
+        <div class="date-row">
+          <input class="form-input" id="form-start-date" type="date" />
+          <input class="form-input" id="form-end-date" type="date" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">대상 학년 (여러 개 선택)</label>
+        <div class="grade-select" id="tour-grade-select">
+          <div class="grade-option" data-grade="전체" onclick="toggleTourGrade(this)">전체</div>
+          <div class="grade-option" data-grade="2" onclick="toggleTourGrade(this)">2학년</div>
+          <div class="grade-option" data-grade="3" onclick="toggleTourGrade(this)">3학년</div>
+          <div class="grade-option" data-grade="4" onclick="toggleTourGrade(this)">4학년</div>
+          <div class="grade-option" data-grade="5" onclick="toggleTourGrade(this)">5학년</div>
+          <div class="grade-option" data-grade="6" onclick="toggleTourGrade(this)">6학년</div>
+        </div>
+      </div>
+      <button class="form-btn" id="tour-submit-btn" onclick="submitTour()">🏆 대회 등록</button>
+      <button class="cancel-btn" onclick="closeTourModal()">취소</button>
+    </div>
+  </div>
+
+  <div class="modal-center" id="ym-modal">
+    <div class="box">
+      <div class="modal-title">📅 년·월 선택</div>
+      <div class="ym-wrap">
+        <div class="ym-col">
+          <div class="lbl">년도</div>
+          <div class="ym-scroll" id="year-scroll"></div>
+        </div>
+        <div class="ym-col">
+          <div class="lbl">월</div>
+          <div class="ym-scroll" id="month-scroll"></div>
+        </div>
+      </div>
+      <button class="mc-btn" onclick="applyYM()">확인</button>
+      <button class="mc-cancel" onclick="closeYM()">취소</button>
+    </div>
+  </div>
+
+  <div class="modal-center" id="nick-modal">
+    <div class="box">
+      <div class="modal-title">👋 환영합니다!</div>
+      <div class="modal-sub">앱에서 사용할 이름을 입력해주세요.<br><br>예) (3학년) 이유찬 엄마<br>김영신 감독 / 이유찬 선수</div>
+      <input class="form-input" id="nick-input" placeholder="이름을 입력하세요" />
+      <button class="mc-btn" onclick="saveNick()">✅ 시작하기</button>
+    </div>
+  </div>
+
+  <div class="modal-center" id="admin-modal">
+    <div class="box">
+      <div class="modal-title">🔑 관리자 모드</div>
+      <div class="modal-sub">관리자 비밀번호를 입력하면<br>모든 일정을 삭제할 수 있습니다.</div>
+      <input class="form-input" id="admin-input" type="password" placeholder="비밀번호" />
+      <button class="mc-btn" onclick="checkAdmin()">확인</button>
+      <button class="mc-cancel" onclick="closeAdminModal()">취소</button>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span>홈</a>
+    <a href="notice.html" class="nav-item"><span class="nav-icon">📢</span>공지</a>
+    <a href="schedule.html" class="nav-item active"><span class="nav-icon">📅</span>일정</a>
+    <a href="gallery.html" class="nav-item"><span class="nav-icon">📸</span>사진</a>
+    <a href="players.html" class="nav-item"><span class="nav-icon">👦</span>선수</a>
+  </nav>
+
+  <script>
+    const ADMIN_PW = "ysfc486";
+    const weekdays = ['일','월','화','수','목','금','토'];
+    let current = new Date();
+    let selectedDates = [];
+    let selectedType = 'normal';
+    let selectedGrades = [];
+    let tourGrades = [];
+    let firebaseSchedules = [];
+    let filterGradeVal = '전체';
+    let myNick = localStorage.getItem('ysfc_nick') || '';
+    let isAdmin = sessionStorage.getItem('ysfc_admin') === '1';
+    let ymYear = current.getFullYear();
+    let ymMonth = current.getMonth();
+
+    const june2026 = {
+      1:'normal',2:'normal',3:'normal',4:'normal',5:'normal',
+      8:'normal',9:'normal',10:'normal',11:'normal',
+      12:'tour-start',13:'tour',14:'tour-end',
+      15:'normal',16:'normal',17:'normal',18:'normal',19:'normal',
+      22:'normal',23:'normal',24:'normal',25:'normal',26:'normal',
+      29:'off',30:'off'
+    };
+    const june2026Labels = { 12:'대회출발', 13:'서천대회', 14:'대회종료', 29:'센터휴무', 30:'센터휴무' };
+    const june2026Notice = '※ 6월일정 연습경기·대회일정으로 변경될수있는점 양해부탁드립니다 ※';
+
+    const tagLabel = {
+      normal: { cls: 'tag-normal', text: '정상수업' },
+      off:    { cls: 'tag-off',    text: '센터휴무' },
+      practice: { cls: 'tag-practice', text: '연습경기' },
+      tour:   { cls: 'tag-tour',   text: '대회' },
+      'tour-start': { cls: 'tag-tour-start', text: '대회출발' },
+      'tour-end':   { cls: 'tag-tour-end',   text: '대회종료' },
+    };
+
+    let db = null;
+    async function initFirebase() {
+      try {
+        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js");
+        const { getFirestore, collection, addDoc, getDocs, doc, deleteDoc } = await import("https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js");
+        const firebaseConfig = {
+          apiKey: "AIzaSyABY7cdBTXJVbnNVVJmhuo9nXNLerbtVEo",
+          authDomain: "ysfc-app-ff413.firebaseapp.com",
+          projectId: "ysfc-app-ff413",
+          storageBucket: "ysfc-app-ff413.firebasestorage.app",
+          messagingSenderId: "791661747168",
+          appId: "1:791661747168:web:3540aacb15306331afe985"
+        };
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        window._addDoc = addDoc; window._collection = collection; window._getDocs = getDocs;
+        window._doc = doc; window._deleteDoc = deleteDoc;
+        await loadFirebaseSchedules();
+      } catch(e) {
+        console.error('Firebase 오류:', e);
+        renderCalendar(); renderList();
+      }
+    }
+
+    function checkNick() { if (!myNick) document.getElementById('nick-modal').classList.add('show'); }
+    window.saveNick = function() {
+      const v = document.getElementById('nick-input').value.trim();
+      if (!v) { alert('이름을 입력해주세요!'); return; }
+      myNick = v; localStorage.setItem('ysfc_nick', v);
+      document.getElementById('nick-modal').classList.remove('show');
+    };
+
+    window.toggleAdmin = function() {
+      if (isAdmin) {
+        if (confirm('관리자 모드를 끌까요?')) {
+          isAdmin = false; sessionStorage.removeItem('ysfc_admin');
+          updateAdminBtn(); renderList();
+        }
+      } else { document.getElementById('admin-modal').classList.add('show'); }
+    };
+    window.checkAdmin = function() {
+      const v = document.getElementById('admin-input').value;
+      if (v === ADMIN_PW) {
+        isAdmin = true; sessionStorage.setItem('ysfc_admin', '1');
+        document.getElementById('admin-modal').classList.remove('show');
+        document.getElementById('admin-input').value = '';
+        updateAdminBtn(); renderList();
+        alert('관리자 모드 ON ✅');
+      } else { alert('비밀번호가 틀렸습니다 😢'); }
+    };
+    window.closeAdminModal = function() {
+      document.getElementById('admin-modal').classList.remove('show');
+      document.getElementById('admin-input').value = '';
+    };
+    function updateAdminBtn() {
+      const btn = document.getElementById('admin-btn');
+      if (isAdmin) { btn.classList.add('on'); btn.textContent = '🔑 ON'; }
+      else { btn.classList.remove('on'); btn.textContent = '🔑'; }
+    }
+
+    function canDelete(s) { return isAdmin || (s.author && s.author === myNick); }
+
+    window.filterGrade = function(g, el) {
+      filterGradeVal = g;
+      document.querySelectorAll('.grade-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      renderCalendar(); renderList();
+    };
+
+    function getGrades(s) {
+      if (Array.isArray(s.grades)) return s.grades;
+      return ['전체'];
+    }
+    function matchesGrade(s) {
+      if (filterGradeVal === '전체') return true;
+      const g = getGrades(s);
+      return g.includes('전체') || g.includes(filterGradeVal);
+    }
+
+    window.toggleGrade = function(el) {
+      const g = el.dataset.grade;
+      const idx = selectedGrades.indexOf(g);
+      if (idx === -1) { selectedGrades.push(g); el.classList.add('selected'); }
+      else { selectedGrades.splice(idx, 1); el.classList.remove('selected'); }
+    };
+    window.toggleTourGrade = function(el) {
+      const g = el.dataset.grade;
+      const idx = tourGrades.indexOf(g);
+      if (idx === -1) { tourGrades.push(g); el.classList.add('selected'); }
+      else { tourGrades.splice(idx, 1); el.classList.remove('selected'); }
+    };
+
+    async function loadFirebaseSchedules() {
+      try {
+        const snapshot = await window._getDocs(window._collection(db, 'schedules'));
+        firebaseSchedules = [];
+        snapshot.forEach(d => firebaseSchedules.push({ id: d.id, ...d.data() }));
+      } catch(e) { console.error(e); }
+      renderCalendar(); renderList();
+    }
+
+    function getScheduleMap(year, month) {
+      const map = {};
+      if (year === 2026 && month === 5 && filterGradeVal === '전체') {
+        Object.entries(june2026).forEach(([d, type]) => {
+          map[parseInt(d)] = { type, label: june2026Labels[d] || tagLabel[type]?.text || '' };
+        });
+      }
+      firebaseSchedules.filter(matchesGrade).forEach(s => {
+        const dateStr = s.date || s.startDate;
+        if (!dateStr) return;
+        const parts = dateStr.split('-');
+        if (parseInt(parts[0]) === year && parseInt(parts[1]) === month+1) {
+          const d = parseInt(parts[2]);
+          let label = s.name || s.detail || tagLabel[s.type]?.text || '';
+          if (s.type === 'practice' && s.opponent) label = 'vs ' + s.opponent;
+          map[d] = { type: s.type, label, name: s.name };
+        }
+      });
+      return map;
+    }
+
+    function renderCalendar() {
+      const year = current.getFullYear();
+      const month = current.getMonth();
+      const today = new Date();
+      document.getElementById('month-title').textContent = year + '년 ' + (month+1) + '월';
+      const noticeBar = document.getElementById('notice-bar');
+      if (year === 2026 && month === 5) { noticeBar.textContent = june2026Notice; noticeBar.classList.add('show'); }
+      else { noticeBar.classList.remove('show'); }
+      const firstDay = new Date(year, month, 1).getDay();
+      const lastDate = new Date(year, month+1, 0).getDate();
+      const scheduleMap = getScheduleMap(year, month);
+      let html = '';
+      for (let i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
+      for (let d = 1; d <= lastDate; d++) {
+        const dow = (firstDay + d - 1) % 7;
+        const isToday = d === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+        const dateStr = year + '-' + String(month+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        const isSel = selectedDates.includes(dateStr);
+        const s = scheduleMap[d];
+        let dateClass = 'cell-date';
+        if (dow === 0) dateClass += ' sun';
+        if (dow === 6) dateClass += ' sat';
+        const dateNum = isToday ? '<div class="' + dateClass + ' today-num">' + d + '</div>' : '<div class="' + dateClass + '">' + d + '</div>';
+        const tagHtml = s && tagLabel[s.type] ? '<span class="cell-tag ' + tagLabel[s.type].cls + '">' + (s.label || tagLabel[s.type].text) + '</span>' : '';
+        html += '<div class="cal-cell' + (isToday?' today':'') + (isSel?' selecting':'') + '" onclick="toggleDate(\'' + dateStr + '\', this)">' + dateNum + tagHtml + '</div>';
+      }
+      document.getElementById('cal-grid').innerHTML = html;
+    }
+
+    function renderList() {
+      const year = current.getFullYear();
+      const month = current.getMonth();
+      const isJune = year === 2026 && month === 5;
+      document.getElementById('list-title').textContent = '📋 ' + (month+1) + '월 주요 일정';
+      let items = [];
+      if (isJune && filterGradeVal === '전체') {
+        const specials = [
+          { d: 12, w: '금', name: '🏆 KY서천대회 출발' },
+          { d: 13, w: '토', name: '🏆 KY서천대회 U-11', detail: '대회 진행' },
+          { d: 14, w: '일', name: '🏁 KY서천대회 종료' },
+          { d: 29, w: '월', name: '🔴 센터 휴무' },
+          { d: 30, w: '화', name: '🔴 센터 휴무' },
+        ];
+        items = specials.map(s =>
+          '<div class="schedule-item">' +
+            '<div class="item-date"><div class="d">' + s.d + '</div><div class="w">' + s.w + '</div></div>' +
+            '<div class="item-divider"></div>' +
+            '<div class="item-info"><div class="item-name">' + s.name + '</div>' + (s.detail?'<div class="item-detail">' + s.detail + '</div>':'') + '</div>' +
+            '<span class="item-fixed">기본일정</span>' +
+          '</div>');
+      }
+      const fbItems = firebaseSchedules.filter(matchesGrade).filter(s => {
+        const d = s.date || s.startDate || '';
+        return d.startsWith(year + '-' + String(month+1).padStart(2,'0'));
+      }).sort((a,b) => (a.date||a.startDate) > (b.date||b.startDate) ? 1 : -1);
+      fbItems.forEach(s => {
+        const dateStr = s.date || s.startDate;
+        const d = new Date(dateStr + 'T00:00:00');
+        let name = s.type === 'tour-start' ? '🏆 ' + (s.name||'대회') + ' 출발'
+                 : s.type === 'tour-end'   ? '🏁 ' + (s.name||'대회') + ' 종료'
+                 : s.type === 'tour'       ? '🏆 ' + (s.name||'대회')
+                 : s.type === 'practice'   ? '⚽ 연습경기' + (s.opponent ? ' vs ' + s.opponent : '')
+                 : s.type === 'off'        ? '🔴 센터휴무' : '✅ 정상수업';
+        const grades = getGrades(s);
+        const gradeStr = grades.includes('전체') ? '' : grades.map(g => g + '학년').join('·');
+        const gradeChip = gradeStr ? '<span class="item-grade">' + gradeStr + '</span>' : '';
+        const delBtn = canDelete(s)
+          ? (s.type && s.type.startsWith('tour')
+              ? '<button class="item-del" onclick="deleteTour(\'' + (s.name||'').replace(/'/g,"\\'") + '\')">🗑️</button>'
+              : '<button class="item-del" onclick="deleteSchedule(\'' + s.id + '\')">🗑️</button>')
+          : '';
+        items.push(
+          '<div class="schedule-item">' +
+            '<div class="item-date"><div class="d">' + d.getDate() + '</div><div class="w">' + weekdays[d.getDay()] + '</div></div>' +
+            '<div class="item-divider"></div>' +
+            '<div class="item-info"><div class="item-name">' + name + gradeChip + '</div>' + (s.detail && s.type!=='practice'?'<div class="item-detail">' + s.detail + '</div>':'') + '</div>' +
+            delBtn +
+          '</div>');
+      });
+      document.getElementById('schedule-items').innerHTML = items.length === 0
+        ? '<div class="loading">등록된 일정이 없습니다<br>👆 날짜를 탭해서 추가해주세요!</div>'
+        : items.join('');
+    }
+
+    window.toggleDate = function(dateStr, el) {
+      if (el.classList.contains('empty')) return;
+      if (!myNick) { checkNick(); return; }
+      const idx = selectedDates.indexOf(dateStr);
+      if (idx === -1) { selectedDates.push(dateStr); el.classList.add('selecting'); }
+      else { selectedDates.splice(idx, 1); el.classList.remove('selecting'); }
+      updateActionBar();
+    };
+
+    function updateActionBar() {
+      const bar = document.getElementById('action-bar');
+      const container = document.getElementById('selected-dates');
+      if (selectedDates.length === 0) { bar.classList.remove('show'); return; }
+      bar.classList.add('show');
+      const sorted = [...selectedDates].sort();
+      container.innerHTML = sorted.map(d => {
+        const date = new Date(d + 'T00:00:00');
+        return '<span class="date-chip">' + (date.getMonth()+1) + '/' + date.getDate() + '(' + weekdays[date.getDay()] + ')</span>';
+      }).join('');
+    }
+
+    window.selectType = function(type) {
+      selectedType = type;
+      document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+      document.getElementById('type-' + type).classList.add('selected');
+      document.getElementById('opp-input').classList.toggle('show', type === 'practice');
+    };
+
+    window.clearSelection = function() {
+      selectedDates = []; selectedType = 'normal'; selectedGrades = [];
+      document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+      document.getElementById('type-normal').classList.add('selected');
+      document.querySelectorAll('#grade-select .grade-option').forEach(o => o.classList.remove('selected'));
+      document.getElementById('opp-input').classList.remove('show');
+      document.getElementById('opp-input').value = '';
+      document.querySelectorAll('.cal-cell.selecting').forEach(c => c.classList.remove('selecting'));
+      document.getElementById('action-bar').classList.remove('show');
+    };
+
+    window.submitNormal = async function() {
+      const btn = document.getElementById('submit-btn');
+      if (!db) { alert('잠시 후 다시 시도해주세요'); return; }
+      if (selectedDates.length === 0) { alert('날짜를 선택해주세요!'); return; }
+      if (selectedGrades.length === 0) { alert('대상 학년을 선택해주세요!'); return; }
+      const opponent = document.getElementById('opp-input').value.trim();
+      if (selectedType === 'practice' && !opponent) { if (!confirm('상대팀 없이 등록할까요?')) return; }
+      btn.disabled = true;
+      try {
+        const detail = selectedType === 'normal' ? '정상수업' : selectedType === 'off' ? '센터휴무' : '연습경기';
+        for (let i = 0; i < selectedDates.length; i++) {
+          btn.textContent = '등록 중... (' + (i+1) + '/' + selectedDates.length + ')';
+          const data = { date: selectedDates[i], type: selectedType, detail, grades: selectedGrades, author: myNick, createdAt: new Date() };
+          if (selectedType === 'practice') data.opponent = opponent;
+          await window._addDoc(window._collection(db, 'schedules'), data);
+        }
+        alert(selectedDates.length + '개 일정이 등록되었습니다! ✅');
+        clearSelection();
+        await loadFirebaseSchedules();
+      } catch(e) { alert('등록 중 오류가 발생했습니다 😢'); }
+      finally { btn.disabled = false; btn.textContent = '📅 일정 등록'; }
+    };
+
+    window.deleteSchedule = async function(id) {
+      const s = firebaseSchedules.find(x => x.id === id);
+      if (!canDelete(s)) { alert('본인이 등록한 일정만 삭제할 수 있습니다.'); return; }
+      if (!confirm('이 일정을 삭제할까요?')) return;
+      try {
+        await window._deleteDoc(window._doc(db, 'schedules', id));
+        alert('삭제되었습니다 ✅');
+        await loadFirebaseSchedules();
+      } catch(e) { console.error(e); alert('삭제 중 오류가 발생했습니다 😢'); }
+    };
+
+    window.deleteTour = async function(name) {
+      const targets = firebaseSchedules.filter(s => s.name === name && s.type && s.type.startsWith('tour'));
+      if (targets.length > 0 && !canDelete(targets[0])) { alert('본인이 등록한 대회만 삭제할 수 있습니다.'); return; }
+      if (!confirm("'" + name + "' 대회 전체 일정을 삭제할까요?")) return;
+      try {
+        for (const t of targets) { await window._deleteDoc(window._doc(db, 'schedules', t.id)); }
+        alert('대회 일정이 삭제되었습니다 ✅');
+        await loadFirebaseSchedules();
+      } catch(e) { console.error(e); alert('삭제 중 오류가 발생했습니다 😢'); }
+    };
+
+    window.openTourModal = function() {
+      if (!myNick) { checkNick(); return; }
+      tourGrades = [];
+      document.querySelectorAll('#tour-grade-select .grade-option').forEach(o => o.classList.remove('selected'));
+      document.getElementById('tour-modal').classList.add('show');
+    };
+    window.closeTourModal = function() { document.getElementById('tour-modal').classList.remove('show'); };
+
+    window.submitTour = async function() {
+      const btn = document.getElementById('tour-submit-btn');
+      if (!db) { alert('잠시 후 다시 시도해주세요'); return; }
+      const name = document.getElementById('form-tour-name').value.trim();
+      const startDate = document.getElementById('form-start-date').value;
+      const endDate = document.getElementById('form-end-date').value;
+      if (!name || !startDate || !endDate) { alert('대회명과 기간을 입력해주세요!'); return; }
+      if (tourGrades.length === 0) { alert('대상 학년을 선택해주세요!'); return; }
+      btn.disabled = true; btn.textContent = '등록 중...';
+      try {
+        const start = new Date(startDate + 'T00:00:00');
+        const end = new Date(endDate + 'T00:00:00');
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+          const ds = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+          const type = ds === startDate ? 'tour-start' : ds === endDate ? 'tour-end' : 'tour';
+          const detail = type === 'tour-start' ? '대회 출발' : type === 'tour-end' ? '대회 종료' : '대회 진행중';
+          await window._addDoc(window._collection(db, 'schedules'), { date: ds, type, name, detail, grades: tourGrades, author: myNick, createdAt: new Date() });
+        }
+        alert(name + ' 일정이 등록되었습니다! ✅');
+        document.getElementById('form-tour-name').value = '';
+        document.getElementById('form-start-date').value = '';
+        document.getElementById('form-end-date').value = '';
+        closeTourModal();
+        await loadFirebaseSchedules();
+      } catch(e) { alert('등록 중 오류가 발생했습니다 😢'); }
+      finally { btn.disabled = false; btn.textContent = '🏆 대회 등록'; }
+    };
+
+    window.changeMonth = function(dir) {
+      current.setMonth(current.getMonth() + dir);
+      clearSelection();
+      renderCalendar(); renderList();
+    };
+
+    // 년·월 빠른 선택
+    window.openYM = function() {
+      ymYear = current.getFullYear();
+      ymMonth = current.getMonth();
+      const ys = document.getElementById('year-scroll');
+      const ms = document.getElementById('month-scroll');
+      let yh = '';
+      for (let y = 2025; y <= 2030; y++) {
+        yh += '<div class="ym-opt' + (y===ymYear?' sel':'') + '" onclick="pickYear(' + y + ', this)">' + y + '년</div>';
+      }
+      ys.innerHTML = yh;
+      let mh = '';
+      for (let m = 1; m <= 12; m++) {
+        mh += '<div class="ym-opt' + ((m-1)===ymMonth?' sel':'') + '" onclick="pickMonth(' + (m-1) + ', this)">' + m + '월</div>';
+      }
+      ms.innerHTML = mh;
+      document.getElementById('ym-modal').classList.add('show');
+    };
+    window.pickYear = function(y, el) {
+      ymYear = y;
+      document.querySelectorAll('#year-scroll .ym-opt').forEach(o => o.classList.remove('sel'));
+      el.classList.add('sel');
+    };
+    window.pickMonth = function(m, el) {
+      ymMonth = m;
+      document.querySelectorAll('#month-scroll .ym-opt').forEach(o => o.classList.remove('sel'));
+      el.classList.add('sel');
+    };
+    window.applyYM = function() {
+      current = new Date(ymYear, ymMonth, 1);
+      document.getElementById('ym-modal').classList.remove('show');
+      clearSelection();
+      renderCalendar(); renderList();
+    };
+    window.closeYM = function() { document.getElementById('ym-modal').classList.remove('show'); };
+
+    updateAdminBtn();
+    checkNick();
+    initFirebase();
+  </script>
+</body>
+</html>

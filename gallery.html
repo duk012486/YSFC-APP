@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>사진첩 · YSFC</title>
+  <style>
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box; 
+    }
+    body { 
+      font-family: 'Apple SD Gothic Neo', '맑은 고딕', sans-serif; 
+      background: #f4f4f4; 
+    }
+    .header {
+      background: linear-gradient(135deg, #1a7c3e, #25a85a);
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-left { 
+      display: flex; 
+      align-items: center; 
+      gap: 12px; 
+    }
+    .back-btn { 
+      font-size: 22px; 
+      text-decoration: none; 
+      color: white; 
+    }
+    .header h1 { 
+      font-size: 18px; 
+      font-weight: 700; 
+    }
+    .upload-btn-header {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .album-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 14px;
+      padding-bottom: 80px;
+    }
+    .album-card {
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      cursor: pointer;
+    }
+    .album-thumb {
+      aspect-ratio: 1;
+      background: #e8f5ee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      position: relative;
+      overflow: hidden;
+    }
+    .album-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .album-count-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 20px;
+    }
+    .album-info { 
+      padding: 10px 12px; 
+    }
+    .album-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .album-date { 
+      font-size: 11px; 
+      color: #aaa; 
+    }
+
+    /* 앨범 상세 */
+    .album-detail {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #f4f4f4;
+      z-index: 50;
+      overflow-y: auto;
+    }
+    .album-detail.show { 
+      display: block; 
+    }
+    .detail-header {
+      background: linear-gradient(135deg, #1a7c3e, #25a85a);
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: sticky;
+      top: 0;
+    }
+    .detail-back { 
+      font-size: 22px; 
+      cursor: pointer; 
+      color: white; 
+      background: none; 
+      border: none; 
+    }
+    .detail-title { 
+      font-size: 16px; 
+      font-weight: 700; 
+    }
+    .detail-date { 
+      font-size: 12px; 
+      opacity: 0.8; 
+      margin-left: auto; 
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      padding: 3px;
+      padding-bottom: 80px;
+    }
+    .detail-photo {
+      aspect-ratio: 1;
+      background: #e8f5ee;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .detail-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* 사진 뷰어 */
+    .photo-viewer {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.95);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+    .photo-viewer.show { 
+      display: flex; 
+    }
+    .viewer-close {
+      position: absolute;
+      top: 20px; right: 20px;
+      color: white;
+      font-size: 28px;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+    .viewer-img {
+      max-width: 95%;
+      max-height: 80vh;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+    .viewer-caption { 
+      color: white; 
+      font-size: 13px; 
+      margin-top: 16px; 
+      opacity: 0.7; 
+    }
+
+    /* 업로드 모달 */
+    .modal-bg {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+    }
+    .modal-bg.show { 
+      display: flex; 
+      align-items: flex-end; 
+    }
+    .modal {
+      background: white;
+      width: 100%;
+      border-radius: 20px 20px 0 0;
+      padding: 20px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-title { 
+      font-size: 16px; 
+      font-weight: 700; 
+      margin-bottom: 16px; 
+      text-align: center; 
+    }
+    .form-group { 
+      margin-bottom: 14px; 
+    }
+    .form-label { 
+      font-size: 12px; 
+      color: #888; 
+      margin-bottom: 6px; 
+      display: block; 
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .img-upload-area {
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      color: #aaa;
+      font-size: 13px;
+    }
+    .img-upload-area:hover { 
+      border-color: #1a7c3e; 
+      color: #1a7c3e; 
+    }
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .preview-item {
+      aspect-ratio: 1;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .preview-item img { 
+      width: 100%; 
+      height: 100%; 
+      object-fit: cover; 
+    }
+    .form-btn {
+      width: 100%;
+      padding: 14px;
+      background: #1a7c3e;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .form-btn:disabled { 
+      background: #aaa; 
+      cursor: not-allowed; 
+      opacity: 0.7; 
+    }
+    .cancel-btn {
+      width: 100%;
+      padding: 12px;
+      background: #f4f4f4;
+      color: #666;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .loading { 
+      text-align: center; 
+      padding: 40px; 
+      color: #aaa; 
+      font-size: 14px; 
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: white;
+      border-top: 1px solid #eee;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0 16px;
+    }
+    .nav-item { 
+      text-align: center; 
+      text-decoration: none; 
+      color: #aaa; 
+      font-size: 10px; 
+    }
+    .nav-item.active { 
+      color: #1a7c3e; 
+    }
+    .nav-item .nav-icon { 
+      font-size: 22px; 
+      display: block; 
+      margin-bottom: 2px; 
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <a href="index.html" class="back-btn">←</a>
+      <h1>📸 사진첩</h1>
+    </div>
+    <button class="upload-btn-header" onclick="openModal()">📷 올리기</button>  </div>
+
+  <div class="album-grid" id="album-grid">
+    <div class="loading" style="grid-column:span 2">📸 사진을 불러오는 중...</div>
+  </div>
+
+  <div class="album-detail" id="album-detail">
+    <div class="detail-header">
+      <button class="detail-back" onclick="closeAlbum()">←</button>
+      <div class="detail-title" id="detail-title"></div>
+      <div class="detail-date" id="detail-date"></div>
+    </div>
+    <div class="detail-grid" id="detail-grid"></div>
+  </div>
+
+  <div class="photo-viewer" id="photo-viewer">
+    <button class="viewer-close" onclick="closeViewer()">✕</button>
+    <img class="viewer-img" id="viewer-img" src="" alt="">
+    <div class="viewer-caption" id="viewer-caption"></div>
+  </div>
+
+  <div class="modal-bg" id="modal-bg">
+    <div class="modal">
+      <div class="modal-title">📷 사진 올리기</div>
+      <div class="form-group">
+        <label class="form-label">앨범 제목</label>
+        <input class="form-input" id="form-title" placeholder="예: vs 수지FC 경기" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">📷 사진 선택 (여러 장 가능)</label>
+        <div class="img-upload-area" onclick="document.getElementById('img-input').click()">
+          📷 사진을 선택하세요<br>
+          <span style="font-size:11px; margin-top:4px; display:block;">여러 장 동시 선택 가능!</span>
+        </div>
+        <input type="file" id="img-input" accept="image/*" multiple style="display:none" onchange="previewImgs(this)">
+        <div class="preview-grid" id="preview-grid"></div>
+      </div>
+      <button class="form-btn" id="submit-btn" onclick="submitAlbum()">📸 앨범 등록</button>
+      <button class="cancel-btn" onclick="closeModal()">취소</button>    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <span class="nav-icon">🏠</span>홈
+    </a>
+    <a href="notice.html" class="nav-item">
+      <span class="nav-icon">📢</span>공지
+    </a>
+    <a href="schedule.html" class="nav-item">
+      <span class="nav-icon">📅</span>일정
+    </a>
+    <a href="gallery.html" class="nav-item active">
+      <span class="nav-icon">📸</span>사진
+    </a>
+    <a href="players.html" class="nav-item">
+      <span class="nav-icon">👦</span>선수
+    </a>
+  </nav>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyABY7cdBTXJVbnNVVJmhuo9nXNLerbtVEo",
+      authDomain: "ysfc-app-ff413.firebaseapp.com",
+      projectId: "ysfc-app-ff413",
+      storageBucket: "ysfc-app-ff413.firebasestorage.app",
+      messagingSenderId: "791661747168",
+      appId: "1:791661747168:web:3540aacb15306331afe985"
+    };
+
+    const CLOUD_NAME = "dq4qx2qfg";
+    const UPLOAD_PRESET = "YSFC-APP";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let selectedFiles = [];
+
+    window.previewImgs = function(input) {
+      selectedFiles = Array.from(input.files);
+      const grid = document.getElementById('preview-grid');
+      grid.innerHTML = selectedFiles.map(f => {
+        const url = URL.createObjectURL(f);
+        return `<div class="preview-item"><img src="${url}"></div>`;
+      }).join('');
+    };
+
+    async function uploadToCloudinary(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', UPLOAD_PRESET);
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      return data.secure_url;
+    }
+
+    window.loadAlbums = async function() {
+      try {
+        const q = query(collection(db, 'albums'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        const albums = [];
+        snapshot.forEach(doc => albums.push({ id: doc.id, ...doc.data() }));
+
+        if (albums.length === 0) {
+          document.getElementById('album-grid').innerHTML =
+            '<div class="loading" style="grid-column:span 2">등록된 사진이 없습니다</div>';
+          return;
+        }
+
+        document.getElementById('album-grid').innerHTML = albums.map((a, i) => `
+          <div class="album-card" onclick="openAlbum(${i})" data-idx="${i}">
+            <div class="album-thumb">
+              ${a.photos && a.photos[0]
+                ? `<img src="${a.photos[0]}" alt="${a.title}">`
+                : '📸'}
+              <span class="album-count-badge">사진 ${a.photos ? a.photos.length : 0}장</span>
+            </div>
+            <div class="album-info">
+              <div class="album-name">${a.title}</div>
+              <div class="album-date">${a.date}</div>
+            </div>
+          </div>        `).join('');
+
+        window._albums = albums;
+      } catch(e) {
+        document.getElementById('album-grid').innerHTML =
+          '<div class="loading" style="grid-column:span 2">데이터를 불러올 수 없습니다 😢</div>';
+      }
+    }
+
+    window.openAlbum = function(idx) {
+      const album = window._albums[idx];
+      document.getElementById('detail-title').textContent = album.title;
+      document.getElementById('detail-date').textContent = album.date;
+      document.getElementById('detail-grid').innerHTML = (album.photos || []).map((url, i) => `
+        <div class="detail-photo" onclick="openViewer('${url}', '${album.title}', ${i+1}, ${album.photos.length})">
+          <img src="${url}" alt="사진 ${i+1}">
+        </div>      `).join('');
+      document.getElementById('album-detail').classList.add('show');
+    };
+
+    window.closeAlbum = function() {
+      document.getElementById('album-detail').classList.remove('show');
+    };
+
+    window.openViewer = function(url, title, idx, total) {
+      document.getElementById('viewer-img').src = url;
+      document.getElementById('viewer-caption').textContent = `${title} · ${idx}/${total}`;
+      document.getElementById('photo-viewer').classList.add('show');
+    };
+
+    window.closeViewer = function() {
+      document.getElementById('photo-viewer').classList.remove('show');
+    };
+
+    window.openModal = function() {
+      document.getElementById('modal-bg').classList.add('show');
+    };
+
+    window.closeModal = function() {
+      document.getElementById('modal-bg').classList.remove('show');
+      selectedFiles = [];
+      document.getElementById('preview-grid').innerHTML = '';
+      document.getElementById('img-input').value = '';
+      document.getElementById('form-title').value = '';
+    };
+
+    window.submitAlbum = async function() {
+      const title = document.getElementById('form-title').value.trim();
+      const btn = document.getElementById('submit-btn');
+
+      if (!title) { alert('앨범 제목을 입력해주세요!'); return; }
+      if (selectedFiles.length === 0) { alert('사진을 선택해주세요!'); return; }
+
+      btn.disabled = true;
+      btn.textContent = `업로드 중... (0/${selectedFiles.length})`;
+
+      try {
+        const urls = [];
+        for (let i = 0; i < selectedFiles.length; i++) {
+          btn.textContent = `업로드 중... (${i+1}/${selectedFiles.length})`;
+          const url = await uploadToCloudinary(selectedFiles[i]);
+          urls.push(url);
+        }
+
+        const now = new Date();
+        const date = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+
+        await addDoc(collection(db, 'albums'), {
+          title, photos: urls, date,
+          createdAt: now
+        });
+
+        alert('앨범이 등록되었습니다! ✅');
+        closeModal();
+        window.loadAlbums();
+      } catch(e) {
+        alert('업로드 중 오류가 발생했습니다 😢');
+        console.error(e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '📸 앨범 등록';
+      }
+    };
+
+    window.loadAlbums();
+  </script>
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>경기 기록 · YSFC</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Apple SD Gothic Neo', '맑은 고딕', sans-serif; background: #f4f4f4; }
+
+    .header {
+      background: linear-gradient(135deg, #1a7c3e, #25a85a);
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .back-btn { font-size: 22px; text-decoration: none; color: white; }
+    .header h1 { font-size: 18px; font-weight: 700; }
+    .add-btn {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .stats-wrap {
+      background: #1a7c3e;
+      padding: 16px 14px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      text-align: center;
+    }
+    .stat-item { color: white; }
+    .stat-num { font-size: 24px; font-weight: 700; }
+    .stat-label { font-size: 10px; opacity: 0.8; margin-top: 2px; }
+
+    .winrate-wrap {
+      background: white;
+      margin: 12px;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .winrate-title { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 8px; }
+    .winrate-bar {
+      display: flex;
+      border-radius: 8px;
+      overflow: hidden;
+      height: 28px;
+    }
+    .bar-win { background: #1a7c3e; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 700; }
+    .bar-draw { background: #f59e0b; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 700; }
+    .bar-lose { background: #ef4444; display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 700; }
+    .winrate-legend { display: flex; gap: 14px; margin-top: 8px; font-size: 11px; color: #666; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+
+    .tab-bar {
+      background: white;
+      display: flex;
+      border-bottom: 1px solid #eee;
+      padding: 0 14px;
+      margin: 0 12px;
+      border-radius: 12px 12px 0 0;
+    }
+    .tab {
+      padding: 12px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #aaa;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+    }
+    .tab.active { color: #1a7c3e; border-bottom: 2px solid #1a7c3e; }
+
+    .match-list { padding: 0 12px 80px; }
+    .match-item {
+      background: white;
+      border-radius: 0 0 12px 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .match-item + .match-item { border-radius: 12px; }
+    .match-date { font-size: 11px; color: #aaa; margin-bottom: 8px; }
+    .match-teams { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .match-team { text-align: center; flex: 1; }
+    .match-team-name { font-size: 13px; font-weight: 700; color: #333; }
+    .match-score-box { display: flex; align-items: center; gap: 8px; }
+    .match-score-num { font-size: 28px; font-weight: 700; color: #1a7c3e; min-width: 30px; text-align: center; }
+    .match-vs { font-size: 12px; color: #aaa; }
+    .match-result-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 12px; border-radius: 20px; }
+    .badge-win { background: #e8f5ee; color: #1a7c3e; }
+    .badge-draw { background: #fff8e1; color: #d97706; }
+    .badge-lose { background: #fce4ec; color: #e91e63; }
+    .match-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid #f0f0f0; }
+    .match-scorers { font-size: 11px; color: #1a7c3e; font-weight: 600; }
+
+    .scorer-list { padding: 0 12px 80px; display: none; }
+    .scorer-item { background: white; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; gap: 12px; }
+    .scorer-rank { font-size: 18px; font-weight: 700; color: #aaa; min-width: 28px; text-align: center; }
+    .scorer-avatar { width: 40px; height: 40px; background: #e8f5ee; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; overflow: hidden; }
+    .scorer-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .scorer-info { flex: 1; }
+    .scorer-name { font-size: 14px; font-weight: 700; color: #333; }
+    .scorer-detail { font-size: 11px; color: #888; margin-top: 2px; }
+    .scorer-goals { font-size: 20px; font-weight: 700; color: #1a7c3e; }
+    .scorer-goals span { font-size: 11px; color: #aaa; font-weight: 400; }
+
+    /* 모달 */
+    .modal-bg { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 100; }
+    .modal-bg.show { display: flex; align-items: flex-end; }
+    .modal { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; max-height: 85vh; overflow-y: auto; }
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 12px; color: #888; margin-bottom: 6px; display: block; }
+    .form-select, .form-input, .form-textarea { width: 100%; padding: 10px 12px; border: 1px solid #eee; border-radius: 8px; font-size: 14px; font-family: inherit; }
+    .form-textarea { height: 80px; resize: none; }
+    .score-row { display: flex; gap: 10px; align-items: center; }
+    .score-row .form-input { text-align: center; font-size: 20px; font-weight: 700; }
+    .score-vs { font-size: 14px; color: #aaa; font-weight: 600; }
+    .form-btn { width: 100%; padding: 14px; background: #1a7c3e; color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    .form-btn:disabled { background: #aaa; }
+    .cancel-btn { width: 100%; padding: 12px; background: #f4f4f4; color: #666; border: none; border-radius: 12px; font-size: 14px; cursor: pointer; margin-top: 8px; }
+
+    .loading { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
+
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; padding: 10px 0 16px; }
+    .nav-item { text-align: center; text-decoration: none; color: #aaa; font-size: 10px; }
+    .nav-item.active { color: #1a7c3e; }
+    .nav-item .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <a href="index.html" class="back-btn">←</a>
+      <h1>🏆 경기 기록</h1>
+    </div>
+    <button class="add-btn" onclick="openModal()">➕ 경기 추가</button>
+  </div>
+
+  <div class="stats-wrap" id="stats-wrap">
+    <div class="stat-item"><div class="stat-num" id="stat-total">0</div><div class="stat-label">총 경기</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-win">0</div><div class="stat-label">승</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-draw">0</div><div class="stat-label">무</div></div>
+    <div class="stat-item"><div class="stat-num" id="stat-lose">0</div><div class="stat-label">패</div></div>
+  </div>
+
+  <div class="winrate-wrap">
+    <div class="winrate-title">2026 시즌 승률</div>
+    <div class="winrate-bar" id="winrate-bar">
+      <div class="bar-win" style="width:100%">기록 없음</div>
+    </div>
+    <div class="winrate-legend">
+      <span><span class="legend-dot" style="background:#1a7c3e;"></span>승리</span>
+      <span><span class="legend-dot" style="background:#f59e0b;"></span>무승부</span>
+      <span><span class="legend-dot" style="background:#ef4444;"></span>패배</span>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="showTab('matches', this)">경기 결과</button>
+    <button class="tab" onclick="showTab('scorers', this)">득점 순위</button>
+  </div>
+
+  <div class="match-list" id="matches">
+    <div class="loading">🏆 경기 기록을 불러오는 중...</div>
+  </div>
+
+  <div class="scorer-list" id="scorers"></div>
+
+  <!-- 경기 추가 모달 -->
+  <div class="modal-bg" id="modal-bg">
+    <div class="modal">
+      <div class="modal-title">➕ 경기 기록 추가</div>
+      <div class="form-group">
+        <label class="form-label">상대팀</label>
+        <input class="form-input" id="form-opponent" placeholder="예: 수지FC" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">스코어</label>
+        <div class="score-row">
+          <input class="form-input" id="form-score-us" type="number" min="0" value="0" placeholder="우리" />
+          <span class="score-vs">VS</span>
+          <input class="form-input" id="form-score-them" type="number" min="0" value="0" placeholder="상대" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">경기 날짜</label>
+        <input class="form-input" id="form-date" type="date" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">경기장</label>
+        <input class="form-input" id="form-location" placeholder="예: 용인 시민축구장" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">득점자</label>
+        <input class="form-input" id="form-scorers" placeholder="예: 이유찬 2골 · 김민준 1골" />
+      </div>
+      <button class="form-btn" id="submit-btn" onclick="submitMatch()">🏆 경기 기록 저장</button>
+      <button class="cancel-btn" onclick="closeModal()">취소</button>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item">
+      <span class="nav-icon">🏠</span>홈
+    </a>
+    <a href="notice.html" class="nav-item">
+      <span class="nav-icon">📢</span>공지
+    </a>
+    <a href="schedule.html" class="nav-item">
+      <span class="nav-icon">📅</span>일정
+    </a>
+    <a href="gallery.html" class="nav-item">
+      <span class="nav-icon">📸</span>사진
+    </a>
+    <a href="players.html" class="nav-item">
+      <span class="nav-icon">👦</span>선수
+    </a>
+  </nav>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyABY7cdBTXJVbnNVVJmhuo9nXNLerbtVEo",
+      authDomain: "ysfc-app-ff413.firebaseapp.com",
+      projectId: "ysfc-app-ff413",
+      storageBucket: "ysfc-app-ff413.firebasestorage.app",
+      messagingSenderId: "791661747168",
+      appId: "1:791661747168:web:3540aacb15306331afe985"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function loadMatches() {
+      try {
+        const q = query(collection(db, 'matches'), orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+        const matches = [];
+        snapshot.forEach(doc => matches.push({ id: doc.id, ...doc.data() }));
+
+        let win = 0, draw = 0, lose = 0;
+        matches.forEach(m => {
+          if (m.scoreUs > m.scoreThem) win++;
+          else if (m.scoreUs === m.scoreThem) draw++;
+          else lose++;
+        });
+
+        const total = matches.length;
+        document.getElementById('stat-total').textContent = total;
+        document.getElementById('stat-win').textContent = win;
+        document.getElementById('stat-draw').textContent = draw;
+        document.getElementById('stat-lose').textContent = lose;
+
+        if (total > 0) {
+          const wp = Math.round(win/total*100);
+          const dp = Math.round(draw/total*100);
+          const lp = 100 - wp - dp;
+          document.getElementById('winrate-bar').innerHTML = `
+            ${wp > 0 ? `<div class="bar-win" style="width:${wp}%">승 ${wp}%</div>` : ''}
+            ${dp > 0 ? `<div class="bar-draw" style="width:${dp}%">무</div>` : ''}
+            ${lp > 0 ? `<div class="bar-lose" style="width:${lp}%">패 ${lp}%</div>` : ''}
+          `;
+        }
+
+        if (matches.length === 0) {
+          document.getElementById('matches').innerHTML =
+            '<div class="loading">등록된 경기가 없습니다<br>➕ 경기 추가 버튼으로 추가해주세요!</div>';
+          return;
+        }
+
+        const weekdays = ['일','월','화','수','목','금','토'];
+        document.getElementById('matches').innerHTML = matches.map(m => {
+          const date = m.createdAt?.toDate ? m.createdAt.toDate() : new Date();
+          const d = new Date(m.matchDate);
+          const dateStr = `${m.matchDate} (${weekdays[d.getDay()]})`;
+          const result = m.scoreUs > m.scoreThem ? '🏆 승리' : m.scoreUs === m.scoreThem ? '🤝 무승부' : '💪 패배';
+          const badgeClass = m.scoreUs > m.scoreThem ? 'badge-win' : m.scoreUs === m.scoreThem ? 'badge-draw' : 'badge-lose';
+          return `
+            <div class="match-item">
+              <div class="match-date">${dateStr} · ${m.location}</div>
+              <div class="match-teams">
+                <div class="match-team"><div class="match-team-name">와에스FC</div></div>
+                <div class="match-score-box">
+                  <div class="match-score-num">${m.scoreUs}</div>
+                  <div class="match-vs">VS</div>
+                  <div class="match-score-num">${m.scoreThem}</div>
+                </div>
+                <div class="match-team"><div class="match-team-name">${m.opponent}</div></div>
+              </div>
+              <div class="match-footer">
+                <span class="match-result-badge ${badgeClass}">${result}</span>
+                ${m.scorers ? `<span class="match-scorers">⚽ ${m.scorers}</span>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch(e) {
+        document.getElementById('matches').innerHTML =
+          '<div class="loading">데이터를 불러올 수 없습니다 😢</div>';
+        console.error(e);
+      }
+    }
+
+    window.showTab = function(tab, el) {
+      document.getElementById('matches').style.display = tab === 'matches' ? 'block' : 'none';
+      document.getElementById('scorers').style.display = tab === 'scorers' ? 'block' : 'none';
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+    };
+
+    window.openModal = function() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('form-date').value = today;
+      document.getElementById('modal-bg').classList.add('show');
+    };
+
+    window.closeModal = function() {
+      document.getElementById('modal-bg').classList.remove('show');
+    };
+
+    window.submitMatch = async function() {
+      const opponent = document.getElementById('form-opponent').value.trim();
+      const scoreUs = parseInt(document.getElementById('form-score-us').value);
+      const scoreThem = parseInt(document.getElementById('form-score-them').value);
+      const matchDate = document.getElementById('form-date').value;
+      const location = document.getElementById('form-location').value.trim();
+      const scorers = document.getElementById('form-scorers').value.trim();
+      const btn = document.getElementById('submit-btn');
+
+      if (!opponent || !matchDate) {
+        alert('상대팀과 날짜를 입력해주세요!');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '저장 중...';
+
+      try {
+        await addDoc(collection(db, 'matches'), {
+          opponent, scoreUs, scoreThem, matchDate,
+          location: location || '용인 시민축구장',
+          scorers, createdAt: new Date()
+        });
+
+        alert('경기 기록이 저장되었습니다! ✅');
+        closeModal();
+        loadMatches();
+      } catch(e) {
+        alert('저장 중 오류가 발생했습니다 😢');
+        console.error(e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🏆 경기 기록 저장';
+      }
+    };
+
+    loadMatches();
+  </script>
+
+</body>
+</html>

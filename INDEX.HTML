@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1a7c3e">
+  <title>YSFC 와에스FC</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Apple SD Gothic Neo', '맑은 고딕', sans-serif; background: #f4f4f4; }
+
+    .header {
+      background: linear-gradient(135deg, #1a7c3e, #25a85a);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .header img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      margin-bottom: 6px;
+      border-radius: 14px;
+    }
+    .header h1 { font-size: 22px; font-weight: 700; margin: 6px 0 2px; }
+    .header p { font-size: 13px; opacity: 0.85; }
+
+    .notice-banner {
+      background: #fff8e1;
+      border-left: 4px solid #f59e0b;
+      margin: 14px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #444;
+    }
+    .notice-banner strong { color: #d97706; }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 0 14px 14px;
+    }
+    .menu-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px 14px;
+      text-align: center;
+      text-decoration: none;
+      color: #333;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      transition: transform 0.15s;
+    }
+    .menu-card.full {
+      grid-column: span 2;
+      padding: 16px 14px;
+    }
+    .menu-card:active { transform: scale(0.97); }
+    .menu-card .icon { font-size: 34px; margin-bottom: 8px; }
+    .menu-card .label { font-size: 14px; font-weight: 600; }
+    .menu-card .desc { font-size: 11px; color: #888; margin-top: 3px; }
+    .menu-card .badge {
+      display: inline-block;
+      background: #ef4444;
+      color: white;
+      border-radius: 10px;
+      font-size: 10px;
+      padding: 1px 6px;
+      margin-left: 4px;
+    }
+
+    .section { padding: 0 14px 14px; }
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a7c3e;
+      margin-bottom: 10px;
+    }
+    .match-card {
+      background: white;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .match-info { font-size: 11px; color: #888; margin-bottom: 8px; text-align: center; }
+    .match-score {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+    }
+    .team { text-align: center; }
+    .team-name { font-size: 13px; font-weight: 600; }
+    .score { font-size: 32px; font-weight: 700; color: #1a7c3e; }
+    .vs { font-size: 14px; color: #aaa; }
+    .match-result {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #1a7c3e;
+      background: #e8f5ee;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-block;
+      width: 100%;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: white;
+      border-top: 1px solid #eee;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0 16px;
+    }
+    .nav-item {
+      text-align: center;
+      text-decoration: none;
+      color: #aaa;
+      font-size: 10px;
+    }
+    .nav-item.active { color: #1a7c3e; }
+    .nav-item .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+    .content { padding-bottom: 80px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <img src="logo.png" alt="YSFC 로고">
+    <h1>YSFC 와에스FC</h1>
+    <p>용인 유소년 축구클럽</p>
+  </div>
+
+  <div class="content">
+    <div class="notice-banner">
+      📢 <strong>공지</strong> · 이번 주 토요일 훈련은 정상 진행됩니다!
+    </div>
+
+    <div class="menu-grid">
+      <a href="notice.html" class="menu-card">
+        <div class="icon">📢</div>
+        <div class="label">공지사항 <span class="badge">3</span></div>
+        <div class="desc">유니폼 · 차량 · 일정</div>
+      </a>
+      <a href="gallery.html" class="menu-card">
+        <div class="icon">📸</div>
+        <div class="label">사진첩</div>
+        <div class="desc">경기 · 훈련 사진</div>
+      </a>
+      <a href="schedule.html" class="menu-card">
+        <div class="icon">📅</div>
+        <div class="label">일정</div>
+        <div class="desc">월간 계획표</div>
+      </a>
+      <a href="players.html" class="menu-card">
+        <div class="icon">👦</div>
+        <div class="label">선수 명단</div>
+        <div class="desc">학년별 선수</div>
+      </a>
+      <a href="record.html" class="menu-card full">
+        <div class="icon">🏆</div>
+        <div class="label">경기 기록</div>
+        <div class="desc">경기결과 · 득점 순위</div>
+      </a>
+    </div>
+
+    <div class="section">
+      <div class="section-title">⚽ 최근 경기 결과</div>
+      <div class="match-card">
+        <div class="match-info">2026.06.01 · 용인 시민축구장</div>
+        <div class="match-score">
+          <div class="team">
+            <div class="team-name">와에스FC</div>
+            <div class="score">3</div>
+          </div>
+          <div class="vs">VS</div>
+          <div class="team">
+            <div class="score">1</div>
+            <div class="team-name">상대팀</div>
+          </div>
+        </div>
+        <div class="match-result">🏆 승리</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item active">
+      <span class="nav-icon">🏠</span>홈
+    </a>
+    <a href="notice.html" class="nav-item">
+      <span class="nav-icon">📢</span>공지
+    </a>
+    <a href="schedule.html" class="nav-item">
+      <span class="nav-icon">📅</span>일정
+    </a>
+    <a href="gallery.html" class="nav-item">
+      <span class="nav-icon">📸</span>사진
+    </a>
+    <a href="players.html" class="nav-item">
+      <span class="nav-icon">👦</span>선수
+    </a>
+  </nav>
+
+</body>
+</html>

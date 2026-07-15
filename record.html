@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>경기기록 · YSFC</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Apple SD Gothic Neo', '맑은 고딕', sans-serif; background: #f5f6f8; }
+    .header { background: white; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f0f0f0; position: sticky; top: 0; z-index: 10; }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .back-btn { font-size: 20px; text-decoration: none; color: #333; background: #f5f6f8; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .header h1 { font-size: 16px; font-weight: 700; color: #111; }
+    .header-btns { display: flex; gap: 8px; }
+    .add-btn { background: #1a7c3e; color: white; border: none; padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .admin-btn { background: #f5f6f8; color: #555; border: none; padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .admin-btn.on { background: #fbbf24; color: #333; font-weight: 700; }
+    .grade-bar { background: white; display: flex; gap: 6px; padding: 8px 14px; overflow-x: auto; border-bottom: 1px solid #f0f0f0; }
+    .grade-bar::-webkit-scrollbar { display: none; }
+    .grade-tab { padding: 5px 14px; font-size: 12px; font-weight: 700; color: #888; background: #f4f4f4; border: none; border-radius: 20px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .grade-tab.active { background: #1a7c3e; color: white; }
+    .type-bar { background: white; display: flex; border-bottom: 1px solid #f0f0f0; }
+    .type-tab { flex: 1; padding: 13px 0; font-size: 13px; font-weight: 700; color: #bbb; border: none; border-bottom: 2px solid transparent; background: none; cursor: pointer; text-align: center; }
+    .type-tab.active { color: #1a7c3e; border-bottom: 2px solid #1a7c3e; }
+    .stats-card { background: white; margin: 12px 14px 0; border-radius: 16px; padding: 16px; border: 1px solid #f0f0f0; }
+    .stats-title { font-size: 12px; font-weight: 700; color: #888; margin-bottom: 14px; text-align: center; letter-spacing: 0.3px; }
+    .stats-row { display: flex; justify-content: space-around; text-align: center; margin-bottom: 14px; }
+    .stat-box .num { font-size: 26px; font-weight: 700; }
+    .stat-box .lbl { font-size: 10px; color: #aaa; margin-top: 3px; }
+    .num-total { color: #111; }
+    .num-win { color: #1a7c3e; }
+    .num-draw { color: #f59e0b; }
+    .num-lose { color: #ef4444; }
+    .winrate-bar { height: 8px; background: #f5f5f5; border-radius: 10px; overflow: hidden; display: flex; }
+    .bar-win { background: #1a7c3e; height: 100%; }
+    .bar-draw { background: #f59e0b; height: 100%; }
+    .bar-lose { background: #ef4444; height: 100%; }
+    .winrate-text { font-size: 11px; color: #aaa; text-align: center; margin-top: 8px; }
+    .match-list { padding: 12px 14px 90px; display: flex; flex-direction: column; gap: 10px; }
+    .match-card { background: white; border-radius: 14px; padding: 16px; border: 1px solid #f0f0f0; }
+    .match-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 6px; }
+    .match-badges { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .type-badge { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
+    .badge-practice { background: #eff6ff; color: #2563eb; }
+    .badge-tour { background: #fff7ed; color: #ea580c; }
+    .grade-chip { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: #f0fdf4; color: #1a7c3e; }
+    .match-date { font-size: 11px; color: #bbb; }
+    .tour-name { font-size: 12px; font-weight: 700; color: #ea580c; margin-bottom: 10px; }
+    .match-teams { display: flex; align-items: center; justify-content: space-around; margin-bottom: 12px; }
+    .team-side { text-align: center; flex: 1; }
+    .team-name { font-size: 13px; font-weight: 700; color: #1a7c3e; }
+    .team-name.opp { color: #999; }
+    .team-grade { font-size: 10px; color: #aaa; margin-top: 2px; }
+    .score-wrap { display: flex; align-items: center; gap: 10px; }
+    .score-num { font-size: 34px; font-weight: 700; color: #111; line-height: 1; }
+    .score-num.opp { color: #ccc; }
+    .score-colon { font-size: 18px; color: #ddd; }
+    .result-pill { text-align: center; font-size: 12px; font-weight: 700; padding: 5px 0; border-radius: 10px; margin-bottom: 10px; }
+    .result-win { background: #f0fdf4; color: #1a7c3e; }
+    .result-draw { background: #fffbeb; color: #f59e0b; }
+    .result-lose { background: #fef2f2; color: #ef4444; }
+    .period-wrap { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-bottom: 10px; }
+    .period-chip { background: #f5f6f8; border-radius: 8px; padding: 5px 10px; font-size: 11px; color: #555; }
+    .period-chip b { color: #1a7c3e; }
+    .match-foot { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f5f5f5; padding-top: 10px; }
+    .match-author { font-size: 11px; color: #ccc; }
+    .match-actions { display: flex; gap: 6px; }
+    .act-btn { border: none; border-radius: 8px; padding: 5px 10px; font-size: 11px; cursor: pointer; font-weight: 600; }
+    .act-edit { background: #f0fdf4; color: #1a7c3e; }
+    .act-del { background: #fef2f2; color: #ef4444; }
+    .loading { text-align: center; padding: 40px; color: #bbb; font-size: 14px; }
+    .modal-bg { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; }
+    .modal-bg.show { display: flex; align-items: flex-end; }
+    .modal { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; max-height: 90vh; overflow-y: auto; }
+    .modal-center { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 110; align-items: center; justify-content: center; padding: 20px; }
+    .modal-center.show { display: flex; }
+    .modal-center .box { background: white; border-radius: 20px; padding: 24px; width: 100%; max-width: 340px; }
+    .modal-title { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 16px; text-align: center; }
+    .modal-sub { font-size: 12px; color: #aaa; text-align: center; margin-bottom: 16px; line-height: 1.6; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 11px; font-weight: 700; color: #888; margin-bottom: 6px; display: block; }
+    .form-input, .form-select { width: 100%; padding: 11px 13px; border: 1px solid #eee; border-radius: 10px; font-size: 14px; font-family: inherit; background: #fafafa; color: #111; }
+    .form-input:focus, .form-select:focus { outline: none; border-color: #1a7c3e; background: white; }
+    .form-row { display: flex; gap: 10px; }
+    .form-row > div { flex: 1; }
+    .seg { display: flex; gap: 8px; }
+    .seg-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid #eee; background: white; color: #aaa; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .seg-btn.active { border-color: #1a7c3e; color: #1a7c3e; background: #f0fdf4; }
+    .grade-select { display: flex; flex-wrap: wrap; gap: 8px; }
+    .grade-option { padding: 7px 12px; border-radius: 20px; border: 1.5px solid #eee; cursor: pointer; font-size: 12px; font-weight: 600; color: #aaa; background: white; }
+    .grade-option.selected { border-color: #1a7c3e; color: #1a7c3e; background: #f0fdf4; }
+    .tour-name-group { display: none; }
+    .tour-name-group.show { display: block; }
+    .score-rows { margin-top: 6px; }
+    .score-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .score-row .pname { width: 52px; font-size: 13px; font-weight: 700; color: #1a7c3e; }
+    .score-row .vs-mid { color: #ddd; font-weight: 700; }
+    .score-input { flex: 1; padding: 10px; border: 1px solid #eee; border-radius: 10px; font-size: 16px; text-align: center; font-family: inherit; background: #fafafa; }
+    .total-preview { background: #f0fdf4; border-radius: 10px; padding: 10px; text-align: center; font-size: 14px; font-weight: 700; color: #1a7c3e; margin-top: 6px; }
+    .form-btn { width: 100%; padding: 14px; background: #1a7c3e; color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    .form-btn:disabled { background: #ccc; }
+    .cancel-btn { width: 100%; padding: 12px; background: #f5f6f8; color: #666; border: none; border-radius: 12px; font-size: 14px; cursor: pointer; margin-top: 8px; }
+    .mc-btn { width: 100%; padding: 14px; background: #1a7c3e; color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    .mc-cancel { width: 100%; padding: 12px; background: #f5f6f8; color: #666; border: none; border-radius: 12px; font-size: 14px; cursor: pointer; margin-top: 8px; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-around; padding: 10px 0 max(14px, env(safe-area-inset-bottom)); }
+    .nav-item { text-align: center; text-decoration: none; color: #ccc; font-size: 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .nav-item.active { color: #1a7c3e; }
+    .nav-icon { font-size: 22px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <a href="index.html" class="back-btn">←</a>
+      <h1>경기 기록</h1>
+    </div>
+    <div class="header-btns">
+      <button class="admin-btn" id="admin-btn" onclick="toggleAdmin()">🔑</button>
+      <button class="add-btn" onclick="openModal()">➕ 경기</button>
+    </div>
+  </div>
+
+  <div class="grade-bar" id="grade-bar">
+    <button class="grade-tab active" onclick="filterGrade('전체', this)">전체</button>
+    <button class="grade-tab" onclick="filterGrade('2', this)">2학년</button>
+    <button class="grade-tab" onclick="filterGrade('3', this)">3학년</button>
+    <button class="grade-tab" onclick="filterGrade('4', this)">4학년</button>
+    <button class="grade-tab" onclick="filterGrade('5', this)">5학년</button>
+    <button class="grade-tab" onclick="filterGrade('6', this)">6학년</button>
+  </div>
+
+  <div class="type-bar">
+    <button class="type-tab active" onclick="switchTab('practice', this)">⚽ 연습경기</button>
+    <button class="type-tab" onclick="switchTab('tour', this)">🏆 대회 전적</button>
+  </div>
+
+  <div class="stats-card">
+    <div class="stats-title" id="stats-title">연습경기 전적</div>
+    <div class="stats-row">
+      <div class="stat-box"><div class="num num-total" id="s-total">0</div><div class="lbl">경기</div></div>
+      <div class="stat-box"><div class="num num-win" id="s-win">0</div><div class="lbl">승</div></div>
+      <div class="stat-box"><div class="num num-draw" id="s-draw">0</div><div class="lbl">무</div></div>
+      <div class="stat-box"><div class="num num-lose" id="s-lose">0</div><div class="lbl">패</div></div>
+    </div>
+    <div class="winrate-bar" id="winrate-bar"></div>
+    <div class="winrate-text" id="winrate-text">아직 기록이 없습니다</div>
+  </div>
+
+  <div class="match-list" id="match-list">
+    <div class="loading">경기 기록을 불러오는 중...</div>
+  </div>
+
+  <div class="modal-bg" id="modal-bg">
+    <div class="modal">
+      <div class="modal-title" id="modal-title">➕ 경기 추가</div>
+      <div class="form-group">
+        <label class="form-label">경기 유형</label>
+        <div class="seg" id="seg-type">
+          <button class="seg-btn active" data-type="practice" onclick="selectMatchType('practice')">⚽ 연습경기</button>
+          <button class="seg-btn" data-type="tour" onclick="selectMatchType('tour')">🏆 대회경기</button>
+        </div>
+      </div>
+      <div class="form-group tour-name-group" id="tour-name-group">
+        <label class="form-label">대회명</label>
+        <input class="form-input" id="form-tour-name" placeholder="예: KY서천대회 U-11" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">우리 팀 (출생연도, 여러 개 선택)</label>
+        <div class="grade-select" id="grade-select"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">상대팀</label>
+          <input class="form-input" id="form-opponent" placeholder="예: 수원FC" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">상대 학년</label>
+          <select class="form-select" id="form-opp-grade">
+            <option value="2학년">2학년</option>
+            <option value="3학년">3학년</option>
+            <option value="4학년">4학년</option>
+            <option value="5학년">5학년</option>
+            <option value="6학년">6학년</option>
+            <option value="혼합">혼합</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">경기 날짜</label>
+        <input class="form-input" id="form-date" type="date" />
+      </div>
+      <div class="form-group" id="tour-format-group" style="display:none;">
+        <label class="form-label">경기 형식</label>
+        <div class="seg" id="seg-format">
+          <button class="seg-btn active" data-fmt="half" onclick="selectFormat('half')">전·후반</button>
+          <button class="seg-btn" data-fmt="single" onclick="selectFormat('single')">단판</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" id="score-label">쿼터별 점수 (YSFC : 상대)</label>
+        <div class="score-rows" id="score-rows"></div>
+        <div class="total-preview" id="total-preview">합계 0 : 0</div>
+      </div>
+      <button class="form-btn" id="submit-btn" onclick="submitMatch()">🏆 경기 등록</button>
+      <button class="cancel-btn" onclick="closeModal()">취소</button>
+    </div>
+  </div>
+
+  <div class="modal-center" id="nick-modal">
+    <div class="box">
+      <div class="modal-title">👋 환영합니다!</div>
+      <div class="modal-sub">앱에서 사용할 이름을 입력해주세요.<br><br>예) (3학년) 이유찬 엄마<br>김영신 감독 / 이유찬 선수</div>
+      <input class="form-input" id="nick-input" placeholder="이름을 입력하세요" />
+      <button class="mc-btn" onclick="saveNick()">✅ 시작하기</button>
+    </div>
+  </div>
+
+  <div class="modal-center" id="admin-modal">
+    <div class="box">
+      <div class="modal-title">🔑 관리자 모드</div>
+      <div class="modal-sub">비밀번호를 입력하면<br>모든 경기를 수정·삭제할 수 있습니다.</div>
+      <input class="form-input" id="admin-input" type="password" placeholder="비밀번호" />
+      <button class="mc-btn" onclick="checkAdmin()">확인</button>
+      <button class="mc-cancel" onclick="closeAdminModal()">취소</button>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span>홈</a>
+    <a href="notice.html" class="nav-item"><span class="nav-icon">📢</span>공지</a>
+    <a href="schedule.html" class="nav-item"><span class="nav-icon">📅</span>일정</a>
+    <a href="gallery.html" class="nav-item"><span class="nav-icon">📸</span>사진</a>
+    <a href="players.html" class="nav-item"><span class="nav-icon">👦</span>선수</a>
+  </nav>
+
+  <script>
+    const ADMIN_PW = "ysfc486";
+    let allMatches = [];
+    let currentTab = 'practice';
+    let filterGradeVal = '전체';
+    let matchType = 'practice';
+    let tourFormat = 'half';
+    let selectedBirths = [];
+    let editingId = null;
+    let myNick = localStorage.getItem('ysfc_nick') || '';
+    let isAdmin = sessionStorage.getItem('ysfc_admin') === '1';
+    let db = null;
+
+    // 출생연도 → 현재 학년
+    function birthToGrade(birth) {
+      const now = new Date().getFullYear();
+      return (now - parseInt(birth)) - 6;
+    }
+    // 학년 → 출생연도 (2026 기준, 기존 데이터 변환용)
+    const gradeToBirthMap = { 2:2018, 3:2017, 4:2016, 5:2015, 6:2014 };
+
+    // 경기의 출생연도 배열 얻기 (기존 grades 학년 → 출생연도 자동 변환)
+    function getBirths(m) {
+      if (Array.isArray(m.births)) return m.births.map(b => parseInt(b));
+      if (Array.isArray(m.grades)) {
+        return m.grades.filter(g => g !== '전체').map(g => gradeToBirthMap[parseInt(g)] || null).filter(Boolean);
+      }
+      return [];
+    }
+
+    async function initFirebase() {
+      try {
+        const { initializeApp, getApps, getApp } = await import("https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js");
+        const { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc } = await import("https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js");
+        const firebaseConfig = {
+          apiKey: "AIzaSyABY7cdBTXJVbnNVVJmhuo9nXNLerbtVEo",
+          authDomain: "ysfc-app-ff413.firebaseapp.com",
+          projectId: "ysfc-app-ff413",
+          storageBucket: "ysfc-app-ff413.firebasestorage.app",
+          messagingSenderId: "791661747168",
+          appId: "1:791661747168:web:3540aacb15306331afe985"
+        };
+        const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        window._addDoc = addDoc; window._collection = collection; window._getDocs = getDocs;
+        window._doc = doc; window._updateDoc = updateDoc; window._deleteDoc = deleteDoc;
+        await loadMatches();
+      } catch(e) {
+        document.getElementById('match-list').innerHTML = '<div class="loading">연결 오류 😢</div>';
+      }
+    }
+
+    function initBirthSelect() {
+      const box = document.getElementById('grade-select');
+      let html = '';
+      for (let y = 2050; y >= 2014; y--) {
+        const g = birthToGrade(y);
+        const gLabel = (g >= 1 && g <= 6) ? ` (${g}학년)` : '';
+        html += `<div class="grade-option" data-birth="${y}" onclick="toggleBirth(this)">${y}년생${gLabel}</div>`;
+      }
+      box.innerHTML = html;
+    }
+
+    function checkNick() { if (!myNick) document.getElementById('nick-modal').classList.add('show'); }
+    window.saveNick = function() {
+      const v = document.getElementById('nick-input').value.trim();
+      if (!v) { alert('이름을 입력해주세요!'); return; }
+      myNick = v; localStorage.setItem('ysfc_nick', v);
+      document.getElementById('nick-modal').classList.remove('show');
+    };
+
+    window.toggleAdmin = function() {
+      if (isAdmin) {
+        if (confirm('관리자 모드를 끌까요?')) { isAdmin = false; sessionStorage.removeItem('ysfc_admin'); updateAdminBtn(); render(); }
+      } else { document.getElementById('admin-modal').classList.add('show'); }
+    };
+    window.checkAdmin = function() {
+      const v = document.getElementById('admin-input').value;
+      if (v === ADMIN_PW) {
+        isAdmin = true; sessionStorage.setItem('ysfc_admin', '1');
+        document.getElementById('admin-modal').classList.remove('show');
+        document.getElementById('admin-input').value = '';
+        updateAdminBtn(); render(); alert('관리자 모드 ON ✅');
+      } else { alert('비밀번호가 틀렸습니다 😢'); }
+    };
+    window.closeAdminModal = function() { document.getElementById('admin-modal').classList.remove('show'); document.getElementById('admin-input').value = ''; };
+    function updateAdminBtn() {
+      const btn = document.getElementById('admin-btn');
+      if (isAdmin) { btn.classList.add('on'); btn.textContent = '🔑 ON'; }
+      else { btn.classList.remove('on'); btn.textContent = '🔑'; }
+    }
+
+    function canEdit(m) { return true; }
+
+    // 현재 학년 필터에 맞는지 (출생연도를 현재 학년으로 계산해서 비교)
+    function matchesGrade(m) {
+      if (filterGradeVal === '전체') return true;
+      const births = getBirths(m);
+      return births.some(b => birthToGrade(b) === parseInt(filterGradeVal));
+    }
+
+    window.toggleBirth = function(el) {
+      const b = parseInt(el.dataset.birth);
+      const idx = selectedBirths.indexOf(b);
+      if (idx === -1) { selectedBirths.push(b); el.classList.add('selected'); }
+      else { selectedBirths.splice(idx, 1); el.classList.remove('selected'); }
+    };
+
+    window.filterGrade = function(g, el) {
+      filterGradeVal = g;
+      document.querySelectorAll('.grade-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      render();
+    };
+
+    function getTime(ts) {
+      if (!ts) return 0;
+      if (ts.toDate) return ts.toDate().getTime();
+      return new Date(ts).getTime();
+    }
+
+    async function loadMatches() {
+      try {
+        const snapshot = await window._getDocs(window._collection(db, 'matches'));
+        allMatches = [];
+        snapshot.forEach(d => allMatches.push({ id: d.id, ...d.data() }));
+        allMatches.sort((a, b) => {
+          const da = a.matchDate || '', db_ = b.matchDate || '';
+          if (da !== db_) return da < db_ ? 1 : -1;
+          return getTime(b.createdAt) - getTime(a.createdAt);
+        });
+        render();
+      } catch(e) {
+        document.getElementById('match-list').innerHTML = '<div class="loading">데이터를 불러올 수 없습니다 😢</div>';
+      }
+    }
+
+    function getPeriods() {
+      if (matchType === 'practice') return ['1Q','2Q','3Q','4Q'];
+      return tourFormat === 'half' ? ['전반','후반'] : ['단판'];
+    }
+
+    function renderScoreRows(existing) {
+      const periods = getPeriods();
+      document.getElementById('score-rows').innerHTML = periods.map((p, i) => {
+        const us = existing?.scores?.[i]?.us ?? '';
+        const them = existing?.scores?.[i]?.them ?? '';
+        return `<div class="score-row">
+          <span class="pname">${p}</span>
+          <input class="score-input" type="number" min="0" id="us-${i}" value="${us}" placeholder="0" oninput="updateTotal()">
+          <span class="vs-mid">:</span>
+          <input class="score-input" type="number" min="0" id="them-${i}" value="${them}" placeholder="0" oninput="updateTotal()">
+        </div>`;
+      }).join('');
+      document.getElementById('score-label').textContent = matchType === 'practice' ? '쿼터별 점수 (YSFC : 상대)' : '점수 (YSFC : 상대)';
+      updateTotal();
+    }
+
+    window.updateTotal = function() {
+      const periods = getPeriods();
+      let tu = 0, tt = 0;
+      for (let i = 0; i < periods.length; i++) {
+        tu += parseInt(document.getElementById('us-'+i)?.value) || 0;
+        tt += parseInt(document.getElementById('them-'+i)?.value) || 0;
+      }
+      document.getElementById('total-preview').textContent = `합계 ${tu} : ${tt}`;
+    };
+
+    function calcResult(m) {
+      let us = 0, them = 0;
+      (m.scores || []).forEach(s => { us += s.us||0; them += s.them||0; });
+      return { us, them, result: us > them ? 'win' : us === them ? 'draw' : 'lose' };
+    }
+
+    function render() {
+      const list = allMatches.filter(m => (m.type||'practice') === currentTab).filter(matchesGrade);
+      let win=0, draw=0, lose=0;
+      list.forEach(m => { const r = calcResult(m).result; if(r==='win')win++; else if(r==='draw')draw++; else lose++; });
+      const total = list.length;
+      const gradeLabel = filterGradeVal === '전체' ? '' : ` · ${filterGradeVal}학년`;
+      document.getElementById('stats-title').textContent = (currentTab === 'practice' ? '연습경기 전적' : '대회 전적') + gradeLabel;
+      document.getElementById('s-total').textContent = total;
+      document.getElementById('s-win').textContent = win;
+      document.getElementById('s-draw').textContent = draw;
+      document.getElementById('s-lose').textContent = lose;
+      if (total > 0) {
+        const wp = win/total*100, dp = draw/total*100, lp = lose/total*100;
+        document.getElementById('winrate-bar').innerHTML =
+          `<div class="bar-win" style="width:${wp}%"></div>
+           <div class="bar-draw" style="width:${dp}%"></div>
+           <div class="bar-lose" style="width:${lp}%"></div>`;
+        document.getElementById('winrate-text').textContent = `승률 ${Math.round(win/total*100)}%`;
+      } else {
+        document.getElementById('winrate-bar').innerHTML = '';
+        document.getElementById('winrate-text').textContent = '아직 기록이 없습니다';
+      }
+      if (list.length === 0) {
+        document.getElementById('match-list').innerHTML = '<div class="loading">등록된 경기가 없습니다<br>➕ 경기 버튼으로 추가해주세요!</div>';
+        return;
+      }
+      const resultLabel = { win: '승리 🏆', draw: '무승부 🤝', lose: '패배 💪' };
+      document.getElementById('match-list').innerHTML = list.map(m => {
+        const r = calcResult(m);
+        const periods = m.periods || [];
+        const periodHtml = (m.scores||[]).map((s, i) =>
+          `<div class="period-chip">${periods[i]||''} <b>${s.us}</b>:${s.them}</div>`
+        ).join('');
+        const dateStr = m.matchDate ? m.matchDate.replace(/-/g, '.') : '';
+        const births = getBirths(m);
+        const gradeChips = births.map(b => {
+          const g = birthToGrade(b);
+          const gl = (g >= 1 && g <= 6) ? `${g}학년` : `${b}년생`;
+          return `<span class="grade-chip">${gl}</span>`;
+        }).join('');
+        const birthLabel = births.map(b => {
+          const g = birthToGrade(b);
+          return (g >= 1 && g <= 6) ? `${g}학년` : `${b}년생`;
+        }).join('·');
+        const tourLine = m.type === 'tour' && m.tourName ? `<div class="tour-name">🏆 ${m.tourName}</div>` : '';
+        const actions = canEdit(m)
+          ? `<div class="match-actions">
+              <button class="act-btn act-edit" onclick="editMatch('${m.id}')">✏️ 수정</button>
+              <button class="act-btn act-del" onclick="deleteMatch('${m.id}')">🗑️</button>
+             </div>`
+          : '';
+        return `<div class="match-card">
+          <div class="match-head">
+            <div class="match-badges">
+              <span class="type-badge ${m.type==='tour'?'badge-tour':'badge-practice'}">${m.type==='tour'?'🏆 대회':'⚽ 연습'}</span>
+              ${gradeChips}
+            </div>
+            <span class="match-date">${dateStr}</span>
+          </div>
+          ${tourLine}
+          <div class="match-teams">
+            <div class="team-side">
+              <div class="team-name">YSFC</div>
+              <div class="team-grade">${birthLabel}</div>
+            </div>
+            <div class="score-wrap">
+              <span class="score-num">${r.us}</span>
+              <span class="score-colon">:</span>
+              <span class="score-num opp">${r.them}</span>
+            </div>
+            <div class="team-side">
+              <div class="team-name opp">${m.opponent||'상대팀'}</div>
+              <div class="team-grade">${m.oppGrade||''}</div>
+            </div>
+          </div>
+          <div class="result-pill result-${r.result}">${resultLabel[r.result]}</div>
+          ${periodHtml ? `<div class="period-wrap">${periodHtml}</div>` : ''}
+          <div class="match-foot">
+            <span class="match-author">${m.author||''}</span>
+            ${actions}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    window.switchTab = function(tab, el) {
+      currentTab = tab;
+      document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      render();
+    };
+
+    window.selectMatchType = function(type) {
+      matchType = type;
+      document.querySelectorAll('#seg-type .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.type === type));
+      document.getElementById('tour-format-group').style.display = type === 'tour' ? 'block' : 'none';
+      document.getElementById('tour-name-group').classList.toggle('show', type === 'tour');
+      renderScoreRows();
+    };
+
+    window.selectFormat = function(fmt) {
+      tourFormat = fmt;
+      document.querySelectorAll('#seg-format .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.fmt === fmt));
+      renderScoreRows();
+    };
+
+    window.openModal = function() {
+      if (!myNick) { checkNick(); return; }
+      editingId = null; matchType = 'practice'; tourFormat = 'half'; selectedBirths = [];
+      document.getElementById('modal-title').textContent = '➕ 경기 추가';
+      document.getElementById('submit-btn').textContent = '🏆 경기 등록';
+      document.querySelectorAll('#seg-type .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.type === 'practice'));
+      document.querySelectorAll('#seg-format .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.fmt === 'half'));
+      document.getElementById('tour-format-group').style.display = 'none';
+      document.getElementById('tour-name-group').classList.remove('show');
+      document.getElementById('form-tour-name').value = '';
+      document.getElementById('form-opponent').value = '';
+      document.getElementById('form-opp-grade').value = '4학년';
+      document.getElementById('form-date').value = new Date().toISOString().split('T')[0];
+      document.querySelectorAll('#grade-select .grade-option').forEach(o => o.classList.remove('selected'));
+      renderScoreRows();
+      document.getElementById('modal-bg').classList.add('show');
+    };
+
+    window.editMatch = function(id) {
+      const m = allMatches.find(x => x.id === id);
+      if (!m) return;
+      editingId = id;
+      matchType = m.type || 'practice';
+      tourFormat = m.format || 'half';
+      selectedBirths = getBirths(m).slice();
+      document.getElementById('modal-title').textContent = '✏️ 경기 수정';
+      document.getElementById('submit-btn').textContent = '✅ 수정 완료';
+      document.querySelectorAll('#seg-type .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.type === matchType));
+      document.querySelectorAll('#seg-format .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.fmt === tourFormat));
+      document.getElementById('tour-format-group').style.display = matchType === 'tour' ? 'block' : 'none';
+      document.getElementById('tour-name-group').classList.toggle('show', matchType === 'tour');
+      document.getElementById('form-tour-name').value = m.tourName || '';
+      document.getElementById('form-opponent').value = m.opponent || '';
+      document.getElementById('form-opp-grade').value = m.oppGrade || '4학년';
+      document.getElementById('form-date').value = m.matchDate || '';
+      document.querySelectorAll('#grade-select .grade-option').forEach(o => o.classList.toggle('selected', selectedBirths.includes(parseInt(o.dataset.birth))));
+      renderScoreRows(m);
+      document.getElementById('modal-bg').classList.add('show');
+    };
+
+    window.deleteMatch = async function(id) {
+      if (!confirm('이 경기를 삭제할까요?')) return;
+      try {
+        await window._deleteDoc(window._doc(db, 'matches', id));
+        await loadMatches();
+      } catch(e) { alert('삭제 중 오류가 발생했습니다 😢'); }
+    };
+
+    window.closeModal = function() {
+      document.getElementById('modal-bg').classList.remove('show');
+      editingId = null;
+    };
+
+    window.submitMatch = async function() {
+      const btn = document.getElementById('submit-btn');
+      if (!db || !myNick) { checkNick(); return; }
+      const opponent = document.getElementById('form-opponent').value.trim();
+      const oppGrade = document.getElementById('form-opp-grade').value;
+      const matchDate = document.getElementById('form-date').value;
+      const tourName = document.getElementById('form-tour-name').value.trim();
+      if (selectedBirths.length === 0) { alert('우리 팀(출생연도)을 선택해주세요!'); return; }
+      if (!opponent) { alert('상대팀을 입력해주세요!'); return; }
+      if (!matchDate) { alert('경기 날짜를 선택해주세요!'); return; }
+      if (matchType === 'tour' && !tourName) { alert('대회명을 입력해주세요!'); return; }
+      const periods = getPeriods();
+      const scores = periods.map((_, i) => ({
+        us: parseInt(document.getElementById('us-'+i)?.value) || 0,
+        them: parseInt(document.getElementById('them-'+i)?.value) || 0
+      }));
+      btn.disabled = true; btn.textContent = '처리 중...';
+      try {
+        const data = { type: matchType, format: matchType === 'tour' ? tourFormat : null, tourName: matchType === 'tour' ? tourName : '', opponent, oppGrade, matchDate, periods, scores, births: selectedBirths };
+        if (editingId) {
+          const m = allMatches.find(x => x.id === editingId);
+          data.author = m.author || myNick;
+          // 기존 grades 필드 제거 (출생연도로 완전 전환)
+          data.grades = null;
+          await window._updateDoc(window._doc(db, 'matches', editingId), data);
+          alert('수정되었습니다! ✅');
+        } else {
+          data.author = myNick; data.createdAt = new Date();
+          await window._addDoc(window._collection(db, 'matches'), data);
+          alert('경기가 등록되었습니다! ✅');
+        }
+        closeModal();
+        await loadMatches();
+      } catch(e) {
+        alert('오류가 발생했습니다 😢\n' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = editingId ? '✅ 수정 완료' : '🏆 경기 등록';
+      }
+    };
+
+    initBirthSelect();
+    updateAdminBtn();
+    checkNick();
+    initFirebase();
+  </script>
+</body>
+</html>

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1e4a8f">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="YSFC">
+  <link rel="apple-touch-icon" href="logo.png">
+  <title>YSFC</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { font-family: 'Apple SD Gothic Neo', '맑은 고딕', sans-serif; background: #e8ecf3; }
+    .app { max-width: 480px; margin: 0 auto; background: #f0f3f8; min-height: 100%; display: flex; flex-direction: column; box-shadow: 0 0 50px rgba(0,0,0,0.15); }
+
+    /* 헤더 - 네이비 블루 */
+    .header { background: linear-gradient(135deg, #12305f 0%, #1e4a8f 55%, #2e6bc4 100%); padding: 20px 20px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; position: relative; overflow: hidden; }
+    .header::after { content: ''; position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%); }
+    .header-left { display: flex; align-items: center; gap: 15px; z-index: 1; }
+    .header-logo { width: 64px; height: 64px; border-radius: 15px; object-fit: contain; background: white; padding: 5px; box-shadow: 0 4px 14px rgba(0,0,0,0.25); }
+    .header-text .name { font-size: 24px; font-weight: 900; color: white; letter-spacing: 0.5px; line-height: 1; text-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .header-text .slogan { font-size: 14px; font-weight: 800; color: #ffd54a; margin-top: 5px; letter-spacing: -0.3px; }
+    .header-text .eng { font-size: 9px; color: #a9c3ef; margin-top: 3px; font-weight: 600; letter-spacing: 0.5px; }
+    .mypage-btn { background: rgba(255,255,255,0.18); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 8px 13px; font-size: 12px; font-weight: 700; color: white; cursor: pointer; text-decoration: none; display: flex; align-items: center; gap: 4px; z-index: 1; flex-shrink: 0; }
+
+    /* 학년 탭 */
+    .grade-bar { background: white; display: flex; gap: 6px; padding: 12px 16px; overflow-x: auto; flex-shrink: 0; border-bottom: 1px solid #e8ecf3; }
+    .grade-bar::-webkit-scrollbar { display: none; }
+    .grade-tab { padding: 7px 16px; font-size: 12px; font-weight: 700; color: #7d92b8; background: #eef2f8; border: none; border-radius: 20px; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .grade-tab.active { background: linear-gradient(135deg, #2e6bc4, #1e4a8f); color: white; box-shadow: 0 3px 10px rgba(30,74,143,0.35); }
+
+    .content { flex: 1; padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+
+    .card { background: white; border-radius: 18px; padding: 18px; border: 1px solid #e8ecf3; box-shadow: 0 2px 12px rgba(18,48,95,0.05); }
+    .card-label { font-size: 11px; font-weight: 800; color: #8a9bb8; letter-spacing: 1px; margin-bottom: 14px; text-transform: uppercase; display: flex; align-items: center; gap: 7px; }
+    .card-label::before { content: ''; width: 3px; height: 13px; background: #2e6bc4; border-radius: 2px; }
+
+    /* 선수현황 */
+    .player-stats { display: flex; align-items: center; gap: 16px; }
+    .player-total { text-align: center; min-width: 62px; }
+    .player-total .num { font-size: 38px; font-weight: 900; background: linear-gradient(135deg, #2e6bc4, #1e4a8f); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
+    .player-total .lbl { font-size: 10px; color: #8a9bb8; margin-top: 6px; font-weight: 600; }
+    .divider-v { width: 1px; background: #e8ecf3; align-self: stretch; flex-shrink: 0; }
+    .grade-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: 1; }
+    .grade-item { border-radius: 10px; padding: 9px 12px; display: flex; justify-content: space-between; align-items: center; background: #f5f7fb; border-left: 3px solid; }
+    .grade-item.c2 { border-color: #3b82f6; } .grade-item.c3 { border-color: #22c55e; }
+    .grade-item.c4 { border-color: #eab308; } .grade-item.c5 { border-color: #f97316; }
+    .grade-item.c6 { border-color: #8b5cf6; }
+    .grade-item .g-name { font-size: 11px; font-weight: 700; color: #556; }
+    .grade-item .g-count { font-size: 13px; font-weight: 800; color: #12305f; }
+    .no-player { text-align: center; padding: 12px; color: #aab; font-size: 12px; }
+
+    /* 다음 일정 */
+    .sched-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; margin-bottom: 8px; background: #f5f7fb; border-left: 3px solid; }
+    .sched-item:last-child { margin-bottom: 0; }
+    .sched-practice { border-color: #2e6bc4; } .sched-tour { border-color: #f97316; }
+    .sched-date { text-align: center; min-width: 34px; }
+    .sched-date .d { font-size: 20px; font-weight: 900; }
+    .sched-date .w { font-size: 9px; margin-top: 1px; }
+    .practice-d { color: #2e6bc4; } .practice-w { color: #8ba9d4; }
+    .tour-d { color: #f97316; } .tour-w { color: #d4a98b; }
+    .sched-div { width: 1px; height: 30px; background: #e0e5ee; flex-shrink: 0; }
+    .sched-info { flex: 1; min-width: 0; }
+    .sched-name { font-size: 12px; font-weight: 700; color: #12305f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sched-sub { font-size: 10px; color: #8a9bb8; margin-top: 2px; }
+    .sched-badge { font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 8px; flex-shrink: 0; background: #e5efff; color: #2e6bc4; }
+    .no-sched { text-align: center; padding: 14px; color: #aab; font-size: 12px; }
+
+    /* 최신 공지 */
+    .notice-banner { background: linear-gradient(135deg, #12305f, #1e4a8f); border-radius: 16px; padding: 15px 16px; display: flex; align-items: center; gap: 12px; text-decoration: none; box-shadow: 0 4px 14px rgba(18,48,95,0.2); }
+    .notice-line { width: 4px; height: 36px; background: #ffd54a; border-radius: 3px; flex-shrink: 0; }
+    .notice-content { flex: 1; min-width: 0; }
+    .notice-lbl { font-size: 9px; font-weight: 800; color: #ffd54a; letter-spacing: 0.5px; text-transform: uppercase; }
+    .notice-title { font-size: 13px; font-weight: 700; color: white; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .notice-arrow { color: #a9c3ef; font-size: 18px; }
+
+    /* 메뉴 */
+    .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .menu-card { background: white; border: 1px solid #e8ecf3; border-radius: 16px; padding: 16px 14px; display: flex; align-items: center; gap: 12px; text-decoration: none; transition: all 0.15s; box-shadow: 0 2px 10px rgba(18,48,95,0.05); }
+    .menu-card:active { transform: scale(0.97); }
+    .menu-icon { width: 46px; height: 46px; border-radius: 13px; background: linear-gradient(135deg, #2e6bc4, #1e4a8f); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; box-shadow: 0 4px 12px rgba(30,74,143,0.3); }
+    .menu-label { font-size: 13px; font-weight: 800; color: #12305f; }
+    .menu-desc { font-size: 10px; color: #8a9bb8; margin-top: 2px; }
+    .menu-full { grid-column: 1 / -1; }
+    .menu-full .menu-icon { background: linear-gradient(135deg, #f97316, #ea580c); box-shadow: 0 4px 12px rgba(249,115,22,0.3); }
+
+    .bottom-nav { position: sticky; bottom: 0; background: white; border-top: 1px solid #e8ecf3; display: flex; justify-content: space-around; padding: 10px 0 max(12px, env(safe-area-inset-bottom)); flex-shrink: 0; box-shadow: 0 -2px 12px rgba(18,48,95,0.05); }
+    .nav-item { text-align: center; text-decoration: none; color: #aab8cc; font-size: 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 44px; font-weight: 600; }
+    .nav-item.active { color: #2e6bc4; }
+    .nav-icon { font-size: 21px; }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-left">
+      <img src="logo.png" alt="YSFC" class="header-logo">
+      <div class="header-text">
+        <div class="name">YSFC</div>
+        <div class="slogan">⚽ 인성이 실력이다</div>
+        <div class="eng">YS Football Club · One Team</div>
+      </div>
+    </div>
+    <a href="mypage.html" class="mypage-btn">👤 내 정보</a>
+  </div>
+
+  <div class="grade-bar">
+    <button class="grade-tab active" onclick="setGrade('전체', this)">전체</button>
+    <button class="grade-tab" onclick="setGrade('2', this)">2학년</button>
+    <button class="grade-tab" onclick="setGrade('3', this)">3학년</button>
+    <button class="grade-tab" onclick="setGrade('4', this)">4학년</button>
+    <button class="grade-tab" onclick="setGrade('5', this)">5학년</button>
+    <button class="grade-tab" onclick="setGrade('6', this)">6학년</button>
+  </div>
+
+  <div class="content">
+    <div class="card">
+      <div class="card-label">선수 현황</div>
+      <div id="player-stats"><div class="no-player">불러오는 중...</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">다음 일정</div>
+      <div id="next-sched"><div class="no-sched">불러오는 중...</div></div>
+    </div>
+
+    <a href="notice.html" class="notice-banner">
+      <div class="notice-line"></div>
+      <div class="notice-content">
+        <div class="notice-lbl">최신 공지</div>
+        <div class="notice-title" id="banner-title">불러오는 중...</div>
+      </div>
+      <div class="notice-arrow">›</div>
+    </a>
+
+    <div class="menu-grid">
+      <a href="notice.html" class="menu-card">
+        <div class="menu-icon">📢</div>
+        <div><div class="menu-label">공지사항</div><div class="menu-desc">알림·유니폼·차량</div></div>
+      </a>
+      <a href="gallery.html" class="menu-card">
+        <div class="menu-icon">📸</div>
+        <div><div class="menu-label">사진첩</div><div class="menu-desc">경기·훈련 사진</div></div>
+      </a>
+      <a href="schedule.html" class="menu-card">
+        <div class="menu-icon">📅</div>
+        <div><div class="menu-label">일정</div><div class="menu-desc">월간 계획표</div></div>
+      </a>
+      <a href="record.html" class="menu-card">
+        <div class="menu-icon">🏆</div>
+        <div><div class="menu-label">경기 기록</div><div class="menu-desc">전적·승률</div></div>
+      </a>
+      <a href="players.html" class="menu-card">
+        <div class="menu-icon">👦</div>
+        <div><div class="menu-label">선수 명단</div><div class="menu-desc">학년별 선수</div></div>
+      </a>
+      <a href="cheer.html" class="menu-card">
+        <div class="menu-icon">🎵</div>
+        <div><div class="menu-label">응원가</div><div class="menu-desc">YS FC 응원가</div></div>
+      </a>
+      <a href="news.html" class="menu-card menu-full">
+        <div class="menu-icon">📰</div>
+        <div><div class="menu-label">클럽 소식</div><div class="menu-desc">대회결과·클럽뉴스·기사</div></div>
+      </a>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item active"><span class="nav-icon">🏠</span>홈</a>
+    <a href="notice.html" class="nav-item"><span class="nav-icon">📢</span>공지</a>
+    <a href="schedule.html" class="nav-item"><span class="nav-icon">📅</span>일정</a>
+    <a href="gallery.html" class="nav-item"><span class="nav-icon">📸</span>사진</a>
+    <a href="players.html" class="nav-item"><span class="nav-icon">👦</span>선수</a>
+  </nav>
+
+</div>
+
+  <script type="module">
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyABY7cdBTXJVbnNVVJmhuo9nXNLerbtVEo",
+      authDomain: "ysfc-app-ff413.firebaseapp.com",
+      projectId: "ysfc-app-ff413",
+      storageBucket: "ysfc-app-ff413.firebasestorage.app",
+      messagingSenderId: "791661747168",
+      appId: "1:791661747168:web:3540aacb15306331afe985"
+    };
+    const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const weekdays = ['일','월','화','수','목','금','토'];
+    const gradeCls = { '2':'c2','3':'c3','4':'c4','5':'c5','6':'c6' };
+    const gradeLabel = { '2':'2학년','3':'3학년','4':'4학년','5':'5학년','6':'6학년' };
+
+    function birthToGrade(birth) {
+      const now = new Date().getFullYear();
+      return (now - parseInt(birth)) - 6;
+    }
+    function playerGrade(p) {
+      if (p.birth) return birthToGrade(p.birth);
+      if (p.grade) return parseInt(p.grade);
+      return null;
+    }
+
+    let allPlayers = [];
+    let allSchedules = [];
+    let currentGrade = '전체';
+
+    async function loadAll() {
+      try {
+        const psnap = await getDocs(collection(db, 'players'));
+        allPlayers = [];
+        psnap.forEach(d => allPlayers.push({ id: d.id, ...d.data() }));
+
+        const ssnap = await getDocs(collection(db, 'schedules'));
+        allSchedules = [];
+        ssnap.forEach(d => allSchedules.push({ id: d.id, ...d.data() }));
+
+        const nsnap = await getDocs(collection(db, 'notices'));
+        const notices = [];
+        nsnap.forEach(d => notices.push({ id: d.id, ...d.data() }));
+        notices.sort((a, b) => {
+          const ta = a.updatedAt?.toDate ? a.updatedAt.toDate().getTime() : (a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0);
+          const tb = b.updatedAt?.toDate ? b.updatedAt.toDate().getTime() : (b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0);
+          return tb - ta;
+        });
+        document.getElementById('banner-title').textContent = notices.length > 0 ? notices[0].title : '등록된 공지사항이 없습니다';
+        renderAll();
+      } catch(e) {
+        console.error(e);
+        document.getElementById('player-stats').innerHTML = '<div class="no-player">불러올 수 없습니다 😢</div>';
+        document.getElementById('next-sched').innerHTML = '<div class="no-sched">불러올 수 없습니다 😢</div>';
+      }
+    }
+
+    function getGrades(item) {
+      if (Array.isArray(item.grades)) return item.grades;
+      if (item.grade) return [String(item.grade)];
+      return ['전체'];
+    }
+
+    function renderPlayerStats() {
+      const el = document.getElementById('player-stats');
+      if (currentGrade === '전체') {
+        const counts = {'2':0,'3':0,'4':0,'5':0,'6':0};
+        allPlayers.forEach(p => {
+          const g = playerGrade(p);
+          if (counts[g] !== undefined) counts[g]++;
+        });
+        const total = allPlayers.length;
+        if (total === 0) { el.innerHTML = '<div class="no-player">등록된 선수가 없습니다</div>'; return; }
+        const gridHtml = ['2','3','4','5','6']
+          .filter(g => counts[g] > 0)
+          .map(g => `<div class="grade-item ${gradeCls[g]}"><span class="g-name">${gradeLabel[g]}</span><span class="g-count">${counts[g]}명</span></div>`)
+          .join('');
+        el.innerHTML = `
+          <div class="player-stats">
+            <div class="player-total"><div class="num">${total}</div><div class="lbl">전체 선수</div></div>
+            <div class="divider-v"></div>
+            <div class="grade-grid">${gridHtml}</div>
+          </div>`;
+      } else {
+        const filtered = allPlayers.filter(p => String(playerGrade(p)) === currentGrade);
+        const total = filtered.length;
+        if (total === 0) { el.innerHTML = `<div class="no-player">${currentGrade}학년 등록 선수가 없습니다</div>`; return; }
+        const posCounts = {};
+        filtered.forEach(p => {
+          const pos = Array.isArray(p.positions) ? p.positions : (p.pos ? [p.pos] : []);
+          pos.forEach(po => { posCounts[po] = (posCounts[po] || 0) + 1; });
+        });
+        const cls = gradeCls[currentGrade] || 'c4';
+        const posHtml = Object.entries(posCounts)
+          .map(([pos, cnt]) => `<div class="grade-item ${cls}"><span class="g-name">${pos}</span><span class="g-count">${cnt}명</span></div>`)
+          .join('') || `<div style="color:#aab;font-size:11px;padding:4px;">포지션 미등록</div>`;
+        el.innerHTML = `
+          <div class="player-stats">
+            <div class="player-total"><div class="num">${total}</div><div class="lbl">${currentGrade}학년</div></div>
+            <div class="divider-v"></div>
+            <div class="grade-grid">${posHtml}</div>
+          </div>`;
+      }
+    }
+
+    function schedGrades(s) {
+      if (Array.isArray(s.grades)) return s.grades;
+      return ['전체'];
+    }
+    function schedMatch(s) {
+      if (currentGrade === '전체') return true;
+      const g = schedGrades(s);
+      return g.includes('전체') || g.includes(currentGrade);
+    }
+
+    function renderNextSchedule() {
+      const el = document.getElementById('next-sched');
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const filtered = allSchedules
+        .filter(schedMatch)
+        .filter(s => {
+          const d = new Date((s.date || s.startDate || '') + 'T00:00:00');
+          return d >= today && (s.type === 'practice' || s.type === 'tour' || s.type === 'tour-start');
+        })
+        .sort((a,b) => (a.date||a.startDate) > (b.date||b.startDate) ? 1 : -1)
+        .slice(0, 3);
+
+      if (filtered.length === 0) {
+        el.innerHTML = '<div class="no-sched">예정된 경기·대회 일정이 없습니다</div>';
+        return;
+      }
+      el.innerHTML = filtered.map(s => {
+        const dateStr = s.date || s.startDate;
+        const d = new Date(dateStr + 'T00:00:00');
+        const diff = Math.ceil((d - today) / 86400000);
+        const dday = diff === 0 ? 'D-Day' : 'D-' + diff;
+        const grades = schedGrades(s).filter(g => g !== '전체');
+        const gradeStr = grades.length > 0 ? grades.map(g => g + '학년').join('·') : '';
+        const isPractice = s.type === 'practice';
+        return `<div class="sched-item ${isPractice ? 'sched-practice' : 'sched-tour'}">
+          <div class="sched-date">
+            <div class="d ${isPractice ? 'practice-d' : 'tour-d'}">${d.getDate()}</div>
+            <div class="w ${isPractice ? 'practice-w' : 'tour-w'}">${weekdays[d.getDay()]}</div>
+          </div>
+          <div class="sched-div"></div>
+          <div class="sched-info">
+            <div class="sched-name">${isPractice ? '⚽ 연습경기' + (s.opponent ? ' vs ' + s.opponent : '') : '🏆 ' + (s.name || '대회')}</div>
+            <div class="sched-sub">${s.place ? '📍 ' + s.place + ' · ' : ''}${dday}</div>
+          </div>
+          ${gradeStr ? `<span class="sched-badge">${gradeStr}</span>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    function renderAll() {
+      renderPlayerStats();
+      renderNextSchedule();
+    }
+
+    window.setGrade = function(grade, el) {
+      currentGrade = grade;
+      document.querySelectorAll('.grade-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      renderAll();
+    };
+
+    loadAll();
+  </script>
+
+  <script type="module" src="member.js"></script>
+</body>
+</html>

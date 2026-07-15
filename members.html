@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>회원현황 · YSFC</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Apple SD Gothic Neo', '맑은 고딕', sans-serif; background: #f5f6f8; }
+    .header { background: white; padding: 12px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #f0f0f0; position: sticky; top: 0; z-index: 10; }
+    .back-btn { font-size: 20px; text-decoration: none; color: #333; background: #f5f6f8; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .header h1 { font-size: 16px; font-weight: 700; color: #111; }
+
+    .summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 14px; }
+    .sum-card { background: white; border-radius: 14px; padding: 16px; text-align: center; border: 1px solid #f0f0f0; }
+    .sum-card .n { font-size: 26px; font-weight: 700; color: #1a7c3e; }
+    .sum-card .l { font-size: 11px; color: #aaa; margin-top: 4px; }
+    .sum-card.today .n { color: #2563eb; }
+    .sum-card.week .n { color: #ea580c; }
+
+    .tab-bar { background: white; display: flex; margin: 0 14px; border-radius: 12px 12px 0 0; overflow: hidden; border-bottom: 1px solid #eee; }
+    .tab { flex: 1; padding: 13px 0; font-size: 12px; font-weight: 600; color: #aaa; border: none; background: white; cursor: pointer; text-align: center; }
+    .tab.active { color: #1a7c3e; background: #f0fdf4; }
+
+    .list-box { background: white; margin: 0 14px 90px; border-radius: 0 0 14px 14px; border: 1px solid #f0f0f0; border-top: none; padding: 8px 0; }
+    .member-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #f8f8f8; }
+    .member-row:last-child { border-bottom: none; }
+    .rank { width: 28px; height: 28px; border-radius: 50%; background: #f4f4f4; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #888; flex-shrink: 0; }
+    .rank.top1 { background: #fef3c7; color: #d97706; }
+    .rank.top2 { background: #e5e7eb; color: #6b7280; }
+    .rank.top3 { background: #fde8d4; color: #c2683a; }
+    .m-avatar { width: 36px; height: 36px; border-radius: 50%; background: #f0fdf4; border: 1.5px solid #1a7c3e; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .m-info { flex: 1; }
+    .m-nick { font-size: 14px; font-weight: 600; color: #111; }
+    .m-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+    .m-badge { font-size: 12px; font-weight: 700; color: #1a7c3e; }
+    .m-badge .unit { font-size: 10px; color: #aaa; font-weight: 400; }
+    .online-dot { width: 8px; height: 8px; background: #1a7c3e; border-radius: 50%; flex-shrink: 0; }
+    .loading { text-align: center; padding: 40px; color: #bbb; font-size: 13px; }
+
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-around; padding: 10px 0 max(14px, env(safe-area-inset-bottom)); }
+    .nav-item { text-align: center; text-decoration: none; color: #ccc; font-size: 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .nav-item .nav-icon { font-size: 22px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <a href="mypage.html" class="back-btn">←</a>
+    <h1>👥 회원 현황</h1>
+  </div>
+
+  <div class="summary">
+    <div class="sum-card">
+      <div class="n" id="total-members">-</div>
+      <div class="l">전체 회원</div>
+    </div>
+    <div class="sum-card today">
+      <div class="n" id="active-today">-</div>
+      <div class="l">오늘 접속</div>
+    </div>
+    <div class="sum-card week">
+      <div class="n" id="active-week">-</div>
+      <div class="l">이번주</div>
+    </div>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('recent', this)">🕒 최근 접속</button>
+    <button class="tab" onclick="switchTab('rank', this)">✍️ 글 순위</button>
+    <button class="tab" onclick="switchTab('joined', this)">📅 가입순</button>
+  </div>
+
+  <div class="list-box" id="list-box">
+    <div class="loading">회원 정보를 불러오는 중...</div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span>홈</a>
+    <a href="notice.html" class="nav-item"><span class="nav-icon">📢</span>공지</a>
+    <a href="schedule.html" class="nav-item"><span class="nav-icon">📅</span>일정</a>
+    <a href="gallery.html" class="nav-item"><span class="nav-icon">📸</span>사진</a>
+    <a href="players.html" class="nav-item"><span class="nav-icon">👦</span>선수</a>
+  </nav>
+
+  <script type="module">
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyABY7cdBTXJVbnNVVJmhuo9nXNLerbtVEo",
+      authDomain: "ysfc-app-ff413.firebaseapp.com",
+      projectId: "ysfc-app-ff413",
+      storageBucket: "ysfc-app-ff413.firebasestorage.app",
+      messagingSenderId: "791661747168",
+      appId: "1:791661747168:web:3540aacb15306331afe985"
+    };
+
+    let app;
+    try { app = getApp(); } catch(e) { app = initializeApp(firebaseConfig); }
+    const db = getFirestore(app);
+
+    let members = [];
+    let postCounts = {};
+    let currentTab = 'recent';
+
+    function toDate(ts) {
+      if (!ts) return null;
+      if (typeof ts.toDate === 'function') return ts.toDate();
+      if (ts.seconds) return new Date(ts.seconds * 1000);
+      return new Date(ts);
+    }
+
+    function fmtDate(d) {
+      if (!d) return '-';
+      return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function fmtAgo(d) {
+      if (!d) return '-';
+      const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+      if (diff < 60) return '방금 전';
+      if (diff < 3600) return Math.floor(diff/60) + '분 전';
+      if (diff < 86400) return Math.floor(diff/3600) + '시간 전';
+      if (diff < 86400*7) return Math.floor(diff/86400) + '일 전';
+      return fmtDate(d);
+    }
+
+    function isToday(d) {
+      if (!d) return false;
+      const today = new Date();
+      return d.getDate() === today.getDate() &&
+             d.getMonth() === today.getMonth() &&
+             d.getFullYear() === today.getFullYear();
+    }
+
+    function isThisWeek(d) {
+      if (!d) return false;
+      const now = Date.now();
+      return (now - d.getTime()) < 7 * 86400 * 1000;
+    }
+
+    async function loadAll() {
+      try {
+        // 회원
+        const msnap = await getDocs(collection(db, 'members'));
+        members = [];
+        msnap.forEach(d => members.push({ id: d.id, ...d.data() }));
+
+        // 글 수 집계
+        postCounts = {};
+        const cols = ['notices', 'albums', 'players', 'matches', 'schedules', 'news'];
+        for (const col of cols) {
+          try {
+            const snap = await getDocs(collection(db, col));
+            snap.forEach(d => {
+              const a = d.data().author;
+              if (a) postCounts[a] = (postCounts[a] || 0) + 1;
+            });
+          } catch(e) {}
+        }
+
+        renderSummary();
+        render();
+      } catch(e) {
+        console.error(e);
+        document.getElementById('list-box').innerHTML = '<div class="loading">데이터를 불러올 수 없습니다 😢</div>';
+      }
+    }
+
+    function renderSummary() {
+      document.getElementById('total-members').textContent = members.length;
+      const todayCount = members.filter(m => isToday(toDate(m.lastSeen))).length;
+      const weekCount = members.filter(m => isThisWeek(toDate(m.lastSeen))).length;
+      document.getElementById('active-today').textContent = todayCount;
+      document.getElementById('active-week').textContent = weekCount;
+    }
+
+    window.switchTab = function(tab, el) {
+      currentTab = tab;
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      render();
+    };
+
+    function render() {
+      if (members.length === 0) {
+        document.getElementById('list-box').innerHTML = '<div class="loading">아직 등록된 회원이 없습니다<br>(앱에서 이름을 입력하면 자동 등록됩니다)</div>';
+        return;
+      }
+
+      let sorted = [...members];
+      if (currentTab === 'recent') {
+        sorted.sort((a,b) => (toDate(b.lastSeen)?.getTime()||0) - (toDate(a.lastSeen)?.getTime()||0));
+      } else if (currentTab === 'joined') {
+        sorted.sort((a,b) => (toDate(a.joinedAt)?.getTime()||0) - (toDate(b.joinedAt)?.getTime()||0));
+      } else if (currentTab === 'rank') {
+        sorted.sort((a,b) => (postCounts[b.nick]||0) - (postCounts[a.nick]||0));
+      }
+
+      document.getElementById('list-box').innerHTML = sorted.map((m, i) => {
+        const rank = i + 1;
+        let rankCls = '';
+        if (currentTab === 'rank') {
+          if (rank === 1) rankCls = 'top1';
+          else if (rank === 2) rankCls = 'top2';
+          else if (rank === 3) rankCls = 'top3';
+        }
+        const lastSeen = toDate(m.lastSeen);
+        const joinedAt = toDate(m.joinedAt);
+        const count = postCounts[m.nick] || 0;
+        const online = isToday(lastSeen);
+
+        let sub = '';
+        if (currentTab === 'recent') sub = '마지막 접속 · ' + fmtAgo(lastSeen);
+        else if (currentTab === 'joined') sub = '가입 · ' + fmtDate(joinedAt);
+        else sub = '마지막 접속 · ' + fmtAgo(lastSeen);
+
+        return `<div class="member-row">
+          <div class="rank ${rankCls}">${rank}</div>
+          <div class="m-avatar">👤</div>
+          <div class="m-info">
+            <div class="m-nick">${m.nick}</div>
+            <div class="m-sub">${sub}</div>
+          </div>
+          ${online ? '<div class="online-dot"></div>' : ''}
+          <div class="m-badge">${count}<span class="unit"> 글</span></div>
+        </div>`;
+      }).join('');
+    }
+
+    loadAll();
+  </script>
+  <script type="module" src="member.js"></script>
+</body>
+</html>

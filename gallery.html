@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>사진첩 · YSFC</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Apple SD Gothic Neo', '맑은 고딕', sans-serif; background: #f5f6f8; }
+    .header { background: white; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f0f0f0; position: sticky; top: 0; z-index: 10; }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .back-btn { font-size: 20px; color: #333; background: none; border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .header h1 { font-size: 16px; font-weight: 700; color: #111; }
+    .header-btns { display: flex; gap: 8px; }
+    .add-btn { background: #1a7c3e; color: white; border: none; padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .admin-btn { background: #f5f6f8; color: #555; border: none; padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .admin-btn.on { background: #fbbf24; color: #333; font-weight: 700; }
+    .album-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px 14px 90px; }
+    .album-card { background: white; border-radius: 14px; overflow: hidden; border: 1px solid #f0f0f0; cursor: pointer; position: relative; }
+    .album-card:active { opacity: 0.85; }
+    .album-cover { width: 100%; aspect-ratio: 1; object-fit: cover; background: #f0fdf4; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+    .album-count { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.5); color: white; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+    .album-info { padding: 10px 12px; }
+    .album-title { font-size: 13px; font-weight: 700; color: #111; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .album-meta { font-size: 10px; color: #aaa; margin-top: 3px; display: flex; justify-content: space-between; }
+    .album-comment-count { font-size: 10px; color: #1a7c3e; font-weight: 600; }
+    .detail-header { padding: 14px 14px 0; }
+    .detail-title { font-size: 18px; font-weight: 700; color: #111; }
+    .detail-date { font-size: 12px; color: #aaa; margin-top: 4px; }
+    .detail-actions { display: flex; gap: 8px; margin-top: 12px; }
+    .da-btn { flex: 1; padding: 10px; border-radius: 10px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .da-add { background: #1a7c3e; color: white; }
+    .da-edit { background: #f0fdf4; color: #1a7c3e; }
+    .da-del { background: #fef2f2; color: #ef4444; }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; padding: 14px; }
+    .detail-photo { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; cursor: pointer; }
+
+    /* 댓글 섹션 */
+    .comment-section { background: white; margin: 0 14px 14px; border-radius: 14px; border: 1px solid #f0f0f0; overflow: hidden; }
+    .comment-header { padding: 14px 16px 10px; border-bottom: 1px solid #f5f5f5; }
+    .comment-header-title { font-size: 13px; font-weight: 700; color: #111; }
+    .comment-count-badge { font-size: 11px; color: #1a7c3e; font-weight: 700; margin-left: 6px; }
+    .comment-list { padding: 0; }
+    .comment-item { padding: 12px 16px; border-bottom: 1px solid #f8f8f8; }
+    .comment-item:last-child { border-bottom: none; }
+    .comment-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .comment-nick { font-size: 12px; font-weight: 700; color: #333; }
+    .comment-date { font-size: 10px; color: #bbb; }
+    .comment-text { font-size: 13px; color: #444; line-height: 1.5; white-space: pre-wrap; }
+    .comment-actions { display: flex; gap: 6px; margin-top: 6px; }
+    .comment-act { border: none; border-radius: 6px; padding: 3px 8px; font-size: 10px; cursor: pointer; font-weight: 600; }
+    .comment-edit-btn { background: #f0fdf4; color: #1a7c3e; }
+    .comment-del-btn { background: #fef2f2; color: #ef4444; }
+    .comment-editing { margin-top: 8px; }
+    .comment-edit-input { width: 100%; padding: 8px 10px; border: 1px solid #1a7c3e; border-radius: 8px; font-size: 13px; font-family: inherit; resize: none; background: #f0fdf4; }
+    .comment-edit-btns { display: flex; gap: 6px; margin-top: 6px; }
+    .comment-save-btn { flex: 1; padding: 7px; background: #1a7c3e; color: white; border: none; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .comment-cancel-btn { padding: 7px 12px; background: #f5f6f8; color: #666; border: none; border-radius: 8px; font-size: 12px; cursor: pointer; }
+    .no-comment { padding: 20px; text-align: center; color: #bbb; font-size: 13px; }
+
+    /* 댓글 입력 */
+    .comment-input-wrap { padding: 12px 14px; border-top: 1px solid #f0f0f0; display: flex; gap: 8px; align-items: flex-end; background: white; position: sticky; bottom: 60px; }
+    .comment-input { flex: 1; padding: 10px 12px; border: 1px solid #eee; border-radius: 20px; font-size: 13px; font-family: inherit; resize: none; background: #fafafa; max-height: 80px; }
+    .comment-input:focus { outline: none; border-color: #1a7c3e; background: white; }
+    .comment-send-btn { background: #1a7c3e; color: white; border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 16px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .comment-send-btn:disabled { background: #ccc; }
+
+    .viewer { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.95); z-index: 200; align-items: center; justify-content: center; }
+    .viewer.show { display: flex; }
+    .viewer img { max-width: 100%; max-height: 90%; object-fit: contain; }
+    .viewer-close { position: fixed; top: 16px; right: 20px; color: white; font-size: 24px; cursor: pointer; background: rgba(255,255,255,0.1); border: none; width: 40px; height: 40px; border-radius: 50%; }
+    .viewer-nav { position: fixed; top: 50%; transform: translateY(-50%); color: white; font-size: 36px; cursor: pointer; background: rgba(255,255,255,0.1); border: none; padding: 10px 14px; border-radius: 50%; }
+    .viewer-prev { left: 10px; }
+    .viewer-next { right: 10px; }
+    .modal-bg { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; }
+    .modal-bg.show { display: flex; align-items: flex-end; }
+    .modal { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; max-height: 88vh; overflow-y: auto; }
+    .modal-center { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 110; align-items: center; justify-content: center; padding: 20px; }
+    .modal-center.show { display: flex; }
+    .modal-center .box { background: white; border-radius: 20px; padding: 24px; width: 100%; max-width: 340px; }
+    .modal-title { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 16px; text-align: center; }
+    .modal-sub { font-size: 12px; color: #aaa; text-align: center; margin-bottom: 16px; line-height: 1.6; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 11px; font-weight: 700; color: #888; margin-bottom: 6px; display: block; }
+    .form-input { width: 100%; padding: 11px 13px; border: 1px solid #eee; border-radius: 10px; font-size: 14px; font-family: inherit; background: #fafafa; }
+    .form-input:focus { outline: none; border-color: #1a7c3e; background: white; }
+    .img-upload-area { border: 1.5px dashed #ddd; border-radius: 10px; padding: 24px; text-align: center; cursor: pointer; color: #bbb; font-size: 13px; background: #fafafa; }
+    .preview-count { font-size: 12px; color: #1a7c3e; font-weight: 700; margin-top: 8px; }
+    .preview-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+    .preview-item { position: relative; }
+    .preview-item img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+    .preview-del { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; cursor: pointer; }
+    .form-btn { width: 100%; padding: 14px; background: #1a7c3e; color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    .form-btn:disabled { background: #ccc; }
+    .cancel-btn { width: 100%; padding: 12px; background: #f5f6f8; color: #666; border: none; border-radius: 12px; font-size: 14px; cursor: pointer; margin-top: 8px; }
+    .mc-btn { width: 100%; padding: 14px; background: #1a7c3e; color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+    .mc-cancel { width: 100%; padding: 12px; background: #f5f6f8; color: #666; border: none; border-radius: 12px; font-size: 14px; cursor: pointer; margin-top: 8px; }
+    .loading { text-align: center; padding: 40px; color: #bbb; font-size: 14px; grid-column: 1 / -1; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid #f0f0f0; display: flex; justify-content: space-around; padding: 10px 0 max(14px, env(safe-area-inset-bottom)); z-index: 10; }
+    .nav-item { text-align: center; text-decoration: none; color: #ccc; font-size: 10px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+    .nav-item.active { color: #1a7c3e; }
+    .nav-icon { font-size: 22px; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <h1 id="header-title">사진첩</h1>
+    </div>
+    <div class="header-btns">
+      <button class="admin-btn" id="admin-btn" onclick="toggleAdmin()">🔑</button>
+      <button class="add-btn" id="add-btn" onclick="openModal()">➕ 앨범</button>
+    </div>
+  </div>
+
+  <div id="album-view">
+    <div class="album-grid" id="album-grid">
+      <div class="loading">사진첩을 불러오는 중...</div>
+    </div>
+  </div>
+
+  <div id="detail-view" style="display:none; padding-bottom: 120px;">
+    <div class="detail-header">
+      <div class="detail-title" id="detail-title"></div>
+      <div class="detail-date" id="detail-date"></div>
+      <div class="detail-actions" id="detail-actions"></div>
+    </div>
+    <div class="detail-grid" id="detail-grid"></div>
+
+    <!-- 댓글 섹션 -->
+    <div class="comment-section">
+      <div class="comment-header">
+        <span class="comment-header-title">💬 댓글</span>
+        <span class="comment-count-badge" id="comment-count"></span>
+      </div>
+      <div class="comment-list" id="comment-list">
+        <div class="no-comment">댓글을 불러오는 중...</div>
+      </div>
+    </div>
+
+    <!-- 댓글 입력 -->
+    <div class="comment-input-wrap">
+      <textarea class="comment-input" id="comment-input" placeholder="댓글을 입력하세요..." rows="1"
+        oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+      <button class="comment-send-btn" onclick="submitComment()">➤</button>
+    </div>
+  </div>
+
+  <div class="viewer" id="viewer">
+    <button class="viewer-close" onclick="closeViewer()">✕</button>
+    <button class="viewer-nav viewer-prev" onclick="viewerNav(-1)">‹</button>
+    <img id="viewer-img" src="" alt="">
+    <button class="viewer-nav viewer-next" onclick="viewerNav(1)">›</button>
+  </div>
+
+  <div class="modal-bg" id="modal-bg">
+    <div class="modal">
+      <div class="modal-title" id="modal-title">➕ 새 앨범</div>
+      <div class="form-group" id="title-group">
+        <label class="form-label">앨범 제목</label>
+        <input class="form-input" id="form-title" placeholder="예: 6월 서천대회" />
+      </div>
+      <div class="form-group" id="upload-group">
+        <label class="form-label">📷 사진 (여러 번 선택해도 계속 추가)</label>
+        <div class="img-upload-area" onclick="document.getElementById('img-input').click()">📷 사진 선택 / 더 추가하기</div>
+        <input type="file" id="img-input" accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" multiple style="display:none" onchange="addImgs(this)">
+        <div class="preview-count" id="preview-count"></div>
+        <div class="preview-grid" id="preview-grid"></div>
+      </div>
+      <button class="form-btn" id="submit-btn" onclick="submitAlbum()">📸 앨범 만들기</button>
+      <button class="cancel-btn" onclick="closeModal()">취소</button>
+    </div>
+  </div>
+
+  <div class="modal-center" id="nick-modal">
+    <div class="box">
+      <div class="modal-title">👋 환영합니다!</div>
+      <div class="modal-sub">앱에서 사용할 이름을 입력해주세요.<br><br>예) (3학년) 이유찬 엄마<br>김영신 감독 / 이유찬 선수</div>
+      <input class="form-input" id="nick-input" placeholder="이름을 입력하세요" />
+      <button class="mc-btn" onclick="saveNick()">✅ 시작하기</button>
+    </div>
+  </div>
+
+  <div class="modal-center" id="admin-modal">
+    <div class="box">
+      <div class="modal-title">🔑 관리자 모드</div>
+      <div class="modal-sub">비밀번호를 입력하면<br>모든 앨범·댓글을 관리할 수 있습니다.</div>
+      <input class="form-input" id="admin-input" type="password" placeholder="비밀번호" />
+      <button class="mc-btn" onclick="checkAdmin()">확인</button>
+      <button class="mc-cancel" onclick="closeAdminModal()">취소</button>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span>홈</a>
+    <a href="notice.html" class="nav-item"><span class="nav-icon">📢</span>공지</a>
+    <a href="schedule.html" class="nav-item"><span class="nav-icon">📅</span>일정</a>
+    <a href="gallery.html" class="nav-item active"><span class="nav-icon">📸</span>사진</a>
+    <a href="players.html" class="nav-item"><span class="nav-icon">👦</span>선수</a>
+  </nav>
+
+  <script>
+    const CLOUD_NAME = "dq4qx2qfg";
+    const UPLOAD_PRESET = "YSFC-APP";
+    const ADMIN_PW = "ysfc486";
+    let allAlbums = [];
+    let selectedFiles = [];
+    let currentAlbum = null;
+    let viewerPhotos = [];
+    let viewerIdx = 0;
+    let modalMode = 'new';
+    let myNick = localStorage.getItem('ysfc_nick') || '';
+    let isAdmin = sessionStorage.getItem('ysfc_admin') === '1';
+    let db = null;
+    let allComments = [];
+    let editingCommentId = null;
+
+    async function initFirebase() {
+      try {
+        const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.14.0/firebase-app.js");
+        const { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy } = await import("https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore.js");
+        const firebaseConfig = {
+          apiKey: "AIzaSyABY7cdBTXJVbnNVVJmhuo9nXNLerbtVEo",
+          authDomain: "ysfc-app-ff413.firebaseapp.com",
+          projectId: "ysfc-app-ff413",
+          storageBucket: "ysfc-app-ff413.firebasestorage.app",
+          messagingSenderId: "791661747168",
+          appId: "1:791661747168:web:3540aacb15306331afe985"
+        };
+        const app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        window._addDoc = addDoc; window._collection = collection; window._getDocs = getDocs;
+        window._doc = doc; window._updateDoc = updateDoc; window._deleteDoc = deleteDoc;
+        window._query = query; window._where = where; window._orderBy = orderBy;
+        await loadAlbums();
+      } catch(e) {
+        document.getElementById('album-grid').innerHTML = '<div class="loading">연결 오류가 발생했습니다 😢</div>';
+      }
+    }
+
+    function checkNick() { if (!myNick) document.getElementById('nick-modal').classList.add('show'); }
+    window.saveNick = function() {
+      const v = document.getElementById('nick-input').value.trim();
+      if (!v) { alert('이름을 입력해주세요!'); return; }
+      myNick = v; localStorage.setItem('ysfc_nick', v);
+      document.getElementById('nick-modal').classList.remove('show');
+    };
+
+    window.toggleAdmin = function() {
+      if (isAdmin) {
+        if (confirm('관리자 모드를 끌까요?')) {
+          isAdmin = false; sessionStorage.removeItem('ysfc_admin');
+          updateAdminBtn(); renderAlbums();
+        }
+      } else { document.getElementById('admin-modal').classList.add('show'); }
+    };
+    window.checkAdmin = function() {
+      const v = document.getElementById('admin-input').value;
+      if (v === ADMIN_PW) {
+        isAdmin = true; sessionStorage.setItem('ysfc_admin', '1');
+        document.getElementById('admin-modal').classList.remove('show');
+        document.getElementById('admin-input').value = '';
+        updateAdminBtn(); renderAlbums();
+        alert('관리자 모드 ON ✅');
+      } else { alert('비밀번호가 틀렸습니다 😢'); }
+    };
+    window.closeAdminModal = function() {
+      document.getElementById('admin-modal').classList.remove('show');
+      document.getElementById('admin-input').value = '';
+    };
+    function updateAdminBtn() {
+      const btn = document.getElementById('admin-btn');
+      if (isAdmin) { btn.classList.add('on'); btn.textContent = '🔑 ON'; }
+      else { btn.classList.remove('on'); btn.textContent = '🔑'; }
+    }
+
+    function canEditAlbum(a) { return isAdmin || (a.author && a.author === myNick); }
+    function canEditComment(c) { return isAdmin || (c.author && c.author === myNick); }
+
+    function getTime(ts) {
+      if (!ts) return 0;
+      if (ts.toDate) return ts.toDate().getTime();
+      return new Date(ts).getTime();
+    }
+
+    function fmtDate(ts) {
+      const d = ts?.toDate ? ts.toDate() : (ts ? new Date(ts) : new Date());
+      const now = new Date();
+      const diff = Math.floor((now - d) / 1000);
+      if (diff < 60) return '방금 전';
+      if (diff < 3600) return Math.floor(diff/60) + '분 전';
+      if (diff < 86400) return Math.floor(diff/3600) + '시간 전';
+      if (diff < 86400*7) return Math.floor(diff/86400) + '일 전';
+      return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    async function loadAlbums() {
+      try {
+        const snapshot = await window._getDocs(window._collection(db, 'albums'));
+        allAlbums = [];
+        snapshot.forEach(d => allAlbums.push({ id: d.id, ...d.data() }));
+        allAlbums.sort((a, b) => getTime(b.createdAt) - getTime(a.createdAt));
+
+        // 댓글 수 집계
+        const csnap = await window._getDocs(window._collection(db, 'comments'));
+        const commentCounts = {};
+        csnap.forEach(d => {
+          const albumId = d.data().albumId;
+          if (albumId) commentCounts[albumId] = (commentCounts[albumId] || 0) + 1;
+        });
+        allAlbums.forEach(a => a._commentCount = commentCounts[a.id] || 0);
+        renderAlbums();
+      } catch(e) {
+        document.getElementById('album-grid').innerHTML = '<div class="loading">데이터를 불러올 수 없습니다 😢</div>';
+      }
+    }
+
+    function renderAlbums() {
+      if (allAlbums.length === 0) {
+        document.getElementById('album-grid').innerHTML = '<div class="loading">등록된 앨범이 없습니다<br>➕ 앨범 버튼으로 만들어주세요!</div>';
+        return;
+      }
+      document.getElementById('album-grid').innerHTML = allAlbums.map(a => {
+        const photos = a.photos || [];
+        const cover = photos.length > 0
+          ? `<img class="album-cover" src="${photos[0]}" alt="${a.title}">`
+          : `<div class="album-cover">📷</div>`;
+        const date = a.createdAt?.toDate ? a.createdAt.toDate() : new Date();
+        const dateStr = `${date.getFullYear()}.${String(date.getMonth()+1).padStart(2,'0')}.${String(date.getDate()).padStart(2,'0')}`;
+        const commentBadge = a._commentCount > 0 ? `<span class="album-comment-count">💬 ${a._commentCount}</span>` : '';
+        return `<div class="album-card" onclick="openAlbum('${a.id}')">
+          ${cover}
+          <span class="album-count">${photos.length}장</span>
+          <div class="album-info">
+            <div class="album-title">${a.title}</div>
+            <div class="album-meta"><span>${a.author||''}</span><span>${dateStr}</span></div>
+            ${commentBadge}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    window.openAlbum = async function(id) {
+      currentAlbum = allAlbums.find(a => a.id === id);
+      if (!currentAlbum) return;
+      const photos = currentAlbum.photos || [];
+      const date = currentAlbum.createdAt?.toDate ? currentAlbum.createdAt.toDate() : new Date();
+      document.getElementById('detail-title').textContent = currentAlbum.title;
+      document.getElementById('detail-date').textContent =
+        `${date.getFullYear()}.${String(date.getMonth()+1).padStart(2,'0')}.${String(date.getDate()).padStart(2,'0')} · ${photos.length}장 · ${currentAlbum.author||''}`;
+      const actions = canEditAlbum(currentAlbum)
+        ? `<button class="da-btn da-add" onclick="openAddPhotos()">➕ 사진 추가</button>
+           <button class="da-btn da-edit" onclick="openEditAlbum()">✏️ 제목</button>
+           <button class="da-btn da-del" onclick="deleteAlbum()">🗑️ 삭제</button>`
+        : `<button class="da-btn da-add" onclick="openAddPhotos()">➕ 사진 추가</button>`;
+      document.getElementById('detail-actions').innerHTML = actions;
+      document.getElementById('detail-grid').innerHTML = photos.map((p, i) =>
+        `<img class="detail-photo" src="${p}" onclick="openViewer(${i})">`
+      ).join('');
+      document.getElementById('album-view').style.display = 'none';
+      document.getElementById('detail-view').style.display = 'block';
+      document.getElementById('header-title').textContent = '앨범';
+      document.getElementById('add-btn').style.display = 'none';
+      await loadComments();
+    };
+
+    // 댓글 로드
+    async function loadComments() {
+      if (!currentAlbum) return;
+      try {
+        const snapshot = await window._getDocs(window._collection(db, 'comments'));
+        allComments = [];
+        snapshot.forEach(d => {
+          const data = d.data();
+          if (data.albumId === currentAlbum.id) allComments.push({ id: d.id, ...data });
+        });
+        allComments.sort((a, b) => getTime(a.createdAt) - getTime(b.createdAt));
+        renderComments();
+      } catch(e) { console.error(e); }
+    }
+
+    function renderComments() {
+      const count = allComments.length;
+      document.getElementById('comment-count').textContent = count > 0 ? count + '개' : '';
+      if (count === 0) {
+        document.getElementById('comment-list').innerHTML = '<div class="no-comment">첫 댓글을 남겨보세요! 😊</div>';
+        return;
+      }
+      document.getElementById('comment-list').innerHTML = allComments.map(c => {
+        const canEdit = canEditComment(c);
+        const actions = canEdit
+          ? `<div class="comment-actions">
+              <button class="comment-act comment-edit-btn" onclick="startEditComment('${c.id}')">✏️ 수정</button>
+              <button class="comment-act comment-del-btn" onclick="deleteComment('${c.id}')">🗑️ 삭제</button>
+             </div>`
+          : '';
+        return `<div class="comment-item" id="comment-${c.id}">
+          <div class="comment-top">
+            <span class="comment-nick">${c.author || '익명'}</span>
+            <span class="comment-date">${fmtDate(c.createdAt)}</span>
+          </div>
+          <div class="comment-text" id="comment-text-${c.id}">${c.text}</div>
+          <div id="comment-edit-${c.id}"></div>
+          ${actions}
+        </div>`;
+      }).join('');
+    }
+
+    // 댓글 등록
+    window.submitComment = async function() {
+      if (!myNick) { checkNick(); return; }
+      const input = document.getElementById('comment-input');
+      const text = input.value.trim();
+      if (!text) { alert('댓글을 입력해주세요!'); return; }
+      const btn = document.querySelector('.comment-send-btn');
+      btn.disabled = true;
+      try {
+        await window._addDoc(window._collection(db, 'comments'), {
+          albumId: currentAlbum.id,
+          text,
+          author: myNick,
+          createdAt: new Date()
+        });
+        input.value = '';
+        input.style.height = 'auto';
+        await loadComments();
+        // 댓글 섹션으로 스크롤
+        document.getElementById('comment-list').scrollIntoView({ behavior: 'smooth', block: 'end' });
+      } catch(e) { alert('댓글 등록 중 오류가 발생했습니다 😢'); }
+      finally { btn.disabled = false; }
+    };
+
+    // 댓글 수정 시작
+    window.startEditComment = function(id) {
+      const c = allComments.find(x => x.id === id);
+      if (!c) return;
+      // 기존 수정 중인 거 닫기
+      if (editingCommentId) cancelEditComment(editingCommentId);
+      editingCommentId = id;
+      document.getElementById('comment-text-' + id).style.display = 'none';
+      document.getElementById('comment-edit-' + id).innerHTML = `
+        <div class="comment-editing">
+          <textarea class="comment-edit-input" id="edit-input-${id}" rows="2">${c.text}</textarea>
+          <div class="comment-edit-btns">
+            <button class="comment-save-btn" onclick="saveEditComment('${id}')">✅ 수정 완료</button>
+            <button class="comment-cancel-btn" onclick="cancelEditComment('${id}')">취소</button>
+          </div>
+        </div>`;
+    };
+
+    window.cancelEditComment = function(id) {
+      document.getElementById('comment-text-' + id).style.display = 'block';
+      document.getElementById('comment-edit-' + id).innerHTML = '';
+      editingCommentId = null;
+    };
+
+    window.saveEditComment = async function(id) {
+      const input = document.getElementById('edit-input-' + id);
+      const text = input.value.trim();
+      if (!text) { alert('댓글을 입력해주세요!'); return; }
+      try {
+        await window._updateDoc(window._doc(db, 'comments', id), { text, updatedAt: new Date() });
+        editingCommentId = null;
+        await loadComments();
+      } catch(e) { alert('수정 중 오류가 발생했습니다 😢'); }
+    };
+
+    // 댓글 삭제
+    window.deleteComment = async function(id) {
+      const c = allComments.find(x => x.id === id);
+      if (!canEditComment(c)) { alert('본인이 작성한 댓글만 삭제할 수 있습니다.'); return; }
+      if (!confirm('이 댓글을 삭제할까요?')) return;
+      try {
+        await window._deleteDoc(window._doc(db, 'comments', id));
+        await loadComments();
+      } catch(e) { alert('삭제 중 오류가 발생했습니다 😢'); }
+    };
+
+    window.goBack = function() {
+      if (document.getElementById('detail-view').style.display === 'block') {
+        document.getElementById('detail-view').style.display = 'none';
+        document.getElementById('album-view').style.display = 'block';
+        document.getElementById('header-title').textContent = '사진첩';
+        document.getElementById('add-btn').style.display = 'block';
+        currentAlbum = null; allComments = [];
+        loadAlbums(); // 댓글 수 갱신
+      } else {
+        location.href = 'index.html';
+      }
+    };
+
+    window.openViewer = function(idx) {
+      viewerPhotos = currentAlbum.photos || [];
+      viewerIdx = idx;
+      document.getElementById('viewer-img').src = viewerPhotos[idx];
+      document.getElementById('viewer').classList.add('show');
+    };
+    window.closeViewer = function() { document.getElementById('viewer').classList.remove('show'); };
+    window.viewerNav = function(dir) {
+      viewerIdx = (viewerIdx + dir + viewerPhotos.length) % viewerPhotos.length;
+      document.getElementById('viewer-img').src = viewerPhotos[viewerIdx];
+    };
+
+    window.addImgs = function(input) {
+      selectedFiles = selectedFiles.concat(Array.from(input.files));
+      input.value = ''; renderPreviews();
+    };
+    function renderPreviews() {
+      const grid = document.getElementById('preview-grid');
+      const count = document.getElementById('preview-count');
+      count.textContent = selectedFiles.length > 0 ? `선택된 사진 ${selectedFiles.length}장` : '';
+      grid.innerHTML = '';
+      selectedFiles.forEach((file, idx) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const div = document.createElement('div');
+          div.className = 'preview-item';
+          div.innerHTML = `<img src="${e.target.result}"><button class="preview-del" onclick="removePreview(${idx})">✕</button>`;
+          grid.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    window.removePreview = function(idx) { selectedFiles.splice(idx, 1); renderPreviews(); };
+
+    function compressImage(file) {
+      return new Promise(resolve => {
+        if (!file.type.startsWith('image/')) { resolve(file); return; }
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = () => {
+            const maxW = 1280;
+            let w = img.width, h = img.height;
+            if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            canvas.toBlob(blob => resolve(blob && blob.size < file.size ? blob : file), 'image/jpeg', 0.8);
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    async function uploadToCloudinary(file) {
+      const compressed = await compressImage(file);
+      const fd = new FormData();
+      fd.append('file', compressed); fd.append('upload_preset', UPLOAD_PRESET);
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!data.secure_url) throw new Error('업로드 실패');
+      return data.secure_url;
+    }
+    async function uploadAll(files, btn) {
+      btn.textContent = `사진 ${files.length}장 업로드 중...`;
+      const results = await Promise.allSettled(files.map(f => uploadToCloudinary(f)));
+      const urls = []; let fail = 0;
+      results.forEach(r => { if (r.status === 'fulfilled') urls.push(r.value); else fail++; });
+      return { urls, fail };
+    }
+
+    window.openModal = function() {
+      if (!myNick) { checkNick(); return; }
+      modalMode = 'new';
+      document.getElementById('modal-title').textContent = '➕ 새 앨범';
+      document.getElementById('submit-btn').textContent = '📸 앨범 만들기';
+      document.getElementById('upload-group').style.display = 'block';
+      document.getElementById('title-group').style.display = 'block';
+      document.getElementById('form-title').value = '';
+      selectedFiles = []; renderPreviews();
+      document.getElementById('modal-bg').classList.add('show');
+    };
+    window.openEditAlbum = function() {
+      if (!canEditAlbum(currentAlbum)) { alert('본인이 만든 앨범만 수정할 수 있습니다.'); return; }
+      modalMode = 'edit';
+      document.getElementById('modal-title').textContent = '✏️ 제목 수정';
+      document.getElementById('submit-btn').textContent = '✅ 수정 완료';
+      document.getElementById('upload-group').style.display = 'none';
+      document.getElementById('title-group').style.display = 'block';
+      document.getElementById('form-title').value = currentAlbum.title;
+      document.getElementById('modal-bg').classList.add('show');
+    };
+    window.openAddPhotos = function() {
+      if (!myNick) { checkNick(); return; }
+      modalMode = 'addPhotos';
+      document.getElementById('modal-title').textContent = '➕ 사진 추가';
+      document.getElementById('submit-btn').textContent = '📸 사진 추가';
+      document.getElementById('upload-group').style.display = 'block';
+      document.getElementById('title-group').style.display = 'none';
+      selectedFiles = []; renderPreviews();
+      document.getElementById('modal-bg').classList.add('show');
+    };
+    window.closeModal = function() {
+      document.getElementById('modal-bg').classList.remove('show');
+      selectedFiles = [];
+      document.getElementById('title-group').style.display = 'block';
+    };
+
+    window.submitAlbum = async function() {
+      const btn = document.getElementById('submit-btn');
+      if (!db) { alert('잠시 후 다시 시도해주세요'); return; }
+      if (modalMode === 'edit') {
+        const title = document.getElementById('form-title').value.trim();
+        if (!title) { alert('제목을 입력해주세요!'); return; }
+        btn.disabled = true; btn.textContent = '수정 중...';
+        try {
+          await window._updateDoc(window._doc(db, 'albums', currentAlbum.id), { title });
+          closeModal(); await loadAlbums();
+          currentAlbum.title = title;
+          document.getElementById('detail-title').textContent = title;
+        } catch(e) { alert('수정 중 오류가 발생했습니다 😢'); }
+        finally { btn.disabled = false; btn.textContent = '✅ 수정 완료'; }
+        return;
+      }
+      if (modalMode === 'addPhotos') {
+        if (selectedFiles.length === 0) { alert('사진을 선택해주세요!'); return; }
+        btn.disabled = true;
+        try {
+          const { urls, fail } = await uploadAll(selectedFiles, btn);
+          if (fail > 0 && !confirm(`사진 ${fail}장 실패.\n나머지만 추가할까요?`)) {
+            btn.disabled = false; btn.textContent = '📸 사진 추가'; return;
+          }
+          const newPhotos = [...(currentAlbum.photos || []), ...urls];
+          btn.textContent = '저장 중...';
+          await window._updateDoc(window._doc(db, 'albums', currentAlbum.id), { photos: newPhotos });
+          closeModal(); await loadAlbums();
+          currentAlbum = allAlbums.find(a => a.id === currentAlbum.id);
+          openAlbum(currentAlbum.id);
+        } catch(e) { alert('업로드 중 오류가 발생했습니다 😢'); }
+        finally { btn.disabled = false; btn.textContent = '📸 사진 추가'; }
+        return;
+      }
+      const title = document.getElementById('form-title').value.trim();
+      if (!title) { alert('앨범 제목을 입력해주세요!'); return; }
+      if (selectedFiles.length === 0) { alert('사진을 1장 이상 선택해주세요!'); return; }
+      btn.disabled = true;
+      try {
+        const { urls, fail } = await uploadAll(selectedFiles, btn);
+        if (fail > 0 && !confirm(`사진 ${fail}장 실패.\n나머지만 등록할까요?`)) {
+          btn.disabled = false; btn.textContent = '📸 앨범 만들기'; return;
+        }
+        btn.textContent = '저장 중...';
+        await window._addDoc(window._collection(db, 'albums'), { title, photos: urls, author: myNick, createdAt: new Date() });
+        closeModal(); await loadAlbums();
+      } catch(e) { alert('업로드 중 오류가 발생했습니다 😢'); }
+      finally { btn.disabled = false; btn.textContent = '📸 앨범 만들기'; }
+    };
+
+    window.deleteAlbum = async function() {
+      if (!canEditAlbum(currentAlbum)) { alert('본인이 만든 앨범만 삭제할 수 있습니다.'); return; }
+      if (!confirm('이 앨범을 삭제할까요?\n(댓글도 함께 삭제됩니다)')) return;
+      try {
+        // 댓글도 삭제
+        const csnap = await window._getDocs(window._collection(db, 'comments'));
+        const dels = [];
+        csnap.forEach(d => { if (d.data().albumId === currentAlbum.id) dels.push(window._deleteDoc(window._doc(db, 'comments', d.id))); });
+        await Promise.all(dels);
+        await window._deleteDoc(window._doc(db, 'albums', currentAlbum.id));
+        goBack(); await loadAlbums();
+      } catch(e) { alert('삭제 중 오류가 발생했습니다 😢'); }
+    };
+
+    updateAdminBtn();
+    checkNick();
+    initFirebase();
+  </script>
+  <script type="module" src="member.js"></script>
+</body>
+</html>

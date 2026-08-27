@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>응원가 · YSFC</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Apple SD Gothic Neo', '맑은 고딕', sans-serif; background: #e8ecf3; }
+    .app { max-width: 480px; margin: 0 auto; background: #f0f3f8; min-height: 100vh; box-shadow: 0 0 50px rgba(0,0,0,0.15); }
+    .header { background: linear-gradient(135deg, #12305f, #1e4a8f 55%, #2e6bc4); color: white; padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
+    .back-btn { font-size: 22px; text-decoration: none; color: white; background: rgba(255,255,255,0.15); width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .header h1 { font-size: 18px; font-weight: 700; }
+    .cheer-list { padding: 16px 14px 90px; }
+    .cheer-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(18,48,95,0.08); margin-bottom: 18px; border: 1px solid #e8ecf3; }
+    .cheer-title { font-size: 15px; font-weight: 800; color: #1e4a8f; padding: 14px 16px 10px; display: flex; align-items: center; gap: 6px; }
+    .cheer-badge { font-size: 10px; font-weight: 700; color: white; background: #2e6bc4; padding: 2px 8px; border-radius: 8px; margin-left: auto; }
+    .cheer-badge.new { background: #f97316; }
+    .video-wrap { position: relative; width: 100%; padding-bottom: 56.25%; background: #000; }
+    .video-wrap iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
+    .cheer-desc { font-size: 12px; color: #7a8aa3; padding: 12px 16px 14px; white-space: pre-wrap; line-height: 1.5; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; max-width: 480px; margin: 0 auto; background: white; border-top: 1px solid #e8ecf3; display: flex; justify-content: space-around; padding: 10px 0 max(12px, env(safe-area-inset-bottom)); }
+    .nav-item { text-align: center; text-decoration: none; color: #aab8cc; font-size: 10px; font-weight: 600; }
+    .nav-item.active { color: #2e6bc4; }
+    .nav-item .nav-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <a href="index.html" class="back-btn">←</a>
+    <h1>🎵 응원가</h1>
+  </div>
+
+  <div class="cheer-list">
+
+    <div class="cheer-card">
+      <div class="cheer-title">🎵 YS FC 응원가 <span class="cheer-badge">1집</span></div>
+      <div class="video-wrap">
+        <iframe
+          src="https://www.youtube.com/embed/eShGQgKsmok?playsinline=1"
+          title="YS FC 응원가 1집"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      </div>
+      <div class="cheer-desc">⚽ YS FC 선수들을 위한 응원가입니다!
+경기장에서 다 함께 불러주세요 📣</div>
+    </div>
+
+    <div class="cheer-card">
+      <div class="cheer-title">🎵 YS FC 응원가 <span class="cheer-badge new">2집 NEW</span></div>
+      <div class="video-wrap">
+        <iframe
+          src="https://www.youtube.com/embed/QPbjO8zwlrc?playsinline=1"
+          title="YS FC 응원가 2집"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen>
+        </iframe>
+      </div>
+      <div class="cheer-desc">⚽ YS FC 두 번째 응원곡입니다!
+더 힘차게 함께 응원해주세요 🔥📣</div>
+    </div>
+
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html" class="nav-item"><span class="nav-icon">🏠</span>홈</a>
+    <a href="notice.html" class="nav-item"><span class="nav-icon">📢</span>공지</a>
+    <a href="schedule.html" class="nav-item"><span class="nav-icon">📅</span>일정</a>
+    <a href="gallery.html" class="nav-item"><span class="nav-icon">📸</span>사진</a>
+    <a href="players.html" class="nav-item"><span class="nav-icon">👦</span>선수</a>
+  </nav>
+</div>
+
+  <script type="module" src="member.js"></script>
+</body>
+</html>
